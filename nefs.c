@@ -30,8 +30,9 @@
 #ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
 #endif
-#include "nefs.h"
+//#include "nefs.h"
 #include "debug.h"
+#include "client.h"
 	
 char *host = "127.0.0.1";
 
@@ -104,32 +105,16 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	(void) offset;
 	(void) fi;
 
-	CLIENT *clnt;
 	static ne_readdir_res res;
 	ne_readdir_arg arg;
 	ne_dirent *de;
 	int stat;
 
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
-	//FIXME
-	//res = (ne_readdir_res *)malloc(sizeof(ne_readdir_res));
 	
-	stat = readdir_1(arg, &res, clnt);
-
-	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
+	stat = cm_readdir(arg, &res, host);
+	//TODO:staterr
 	
 	for (de = res.dirent; de != NULL; de = de->next) {
 		struct stat st;
@@ -138,8 +123,6 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		if (filler(buf, de->d_name, &st, 0))
 			break;
 	}
-
-	clnt_destroy(clnt);
 
 	return 0;
 }
