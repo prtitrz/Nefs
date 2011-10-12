@@ -45,15 +45,10 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	
-	plog_entry_location(__FUNCTION__, "attr");
 	stat = cm_getattr(arg, &res, host);
 	
 	//TODO:
 	//staterr&xdr_free
-	
-	if (res.res != 0) {
-		return res.res;
-	}
 
 	(*stbuf).st_ino = res.stbuf.ino;
 	(*stbuf).st_mode = res.stbuf.mode;
@@ -68,6 +63,10 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	(*stbuf).st_blocks = res.stbuf.blocks;
 	(*stbuf).st_dev = res.stbuf.dev;
 	(*stbuf).st_blksize = res.stbuf.blksize;
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
@@ -155,7 +154,6 @@ static int ne_mkdir(const char *path, mode_t mode)
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	
-	plog_entry_location(__FUNCTION__, "aaa");
 	stat = cm_mkdir(arg, &res, host);
 	//TODO:staterr
 
