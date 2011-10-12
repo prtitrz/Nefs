@@ -22,16 +22,28 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 {
 	static struct stat stbuf;
 	memset((char *)&stbuf, 0, sizeof(stbuf));
+
 	res->res = lstat(arg.path, &stbuf);
-	if (res->res == -1)
-		return TRUE;
 	
+	if (res->res == -1){
+		res->res = -errno;
+		return TRUE;
+	}
+
+	plog_entry_location(__FUNCTION__, arg.path);
+	res->stbuf.dev = stbuf.st_dev;
+	res->stbuf.ino = stbuf.st_ino;
 	res->stbuf.mode = stbuf.st_mode;
 	res->stbuf.nlink = stbuf.st_nlink;
+	res->stbuf.uid = stbuf.st_uid;
+	res->stbuf.gid = stbuf.st_gid;
+	res->stbuf.rdev = stbuf.st_rdev;
 	res->stbuf.size = stbuf.st_size;
 	res->stbuf.atime = stbuf.st_atime;
 	res->stbuf.mtime = stbuf.st_mtime;
 	res->stbuf.ctime = stbuf.st_ctime;
+	res->stbuf.blksize = stbuf.st_blksize;
+	res->stbuf.blocks = stbuf.st_blocks;
 
 	return TRUE;
 }
@@ -56,7 +68,7 @@ bool_t readdir_1_svc(ne_readdir_arg arg, ne_readdir_res *res, struct svc_req *re
 	dp = opendir(arg.path);
 	//TODO
 	if (dp == NULL) {
-		return FALSE;
+		return TRUE;
 	}
 
 	d = &(res->dirent);
@@ -83,7 +95,8 @@ bool_t mkdir_1_svc(ne_mkdir_arg arg, ne_mkdir_res *res, struct svc_req *req)
 {
 	res->res = mkdir(arg.path, arg.mode);
 	if (res->res == -1) {
-		return FALSE;
+		res->res = -errno;
+		return TRUE;
 	}
 	return TRUE;
 }
@@ -102,7 +115,8 @@ bool_t rmdir_1_svc(ne_rmdir_arg arg, ne_rmdir_res *res, struct svc_req *req)
 {
 	res->res = rmdir(arg.path);
 	if (res->res == -1) {
-		return FALSE;
+		res->res = -errno;
+		return TRUE;
 	}
 	return TRUE;
 }
@@ -141,7 +155,8 @@ bool_t open_1_svc(ne_open_arg arg, ne_open_res *res, struct svc_req *req)
 {
 	res->res = open(arg.path, arg.flags);
 	if (res->res == -1) {
-		return FALSE;
+		res->res = -errno;
+		return TRUE;
 	}
 	close(res->res);
 	return TRUE;
@@ -161,7 +176,8 @@ bool_t read_1_svc(ne_read_arg arg, ne_read_res *res, struct svc_req *req)
 	res->res = pread(fd, res->buf, arg.size, arg.offset);
 
 	if (res->res == -1) {
-		return FALSE;
+		res->res = -errno;
+		return TRUE;
 	}
 	close(fd);
 	return TRUE;
@@ -178,7 +194,8 @@ bool_t write_1_svc(ne_write_arg arg, ne_write_res *res, struct svc_req *req)
 	res->res = pwrite(fd, arg.buf, arg.size, arg.offset);
 
 	if (res->res == -1) {
-		return FALSE;
+		res->res = -errno;
+		return TRUE;
 	}
 	close(fd);
 	return TRUE;

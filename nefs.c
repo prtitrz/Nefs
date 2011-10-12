@@ -38,40 +38,38 @@ char *host = "127.0.0.1";
 
 static int ne_getattr(const char *path, struct stat *stbuf)
 {
-	CLIENT *clnt;
 	static ne_getattr_res res;
 	ne_getattr_arg arg;
 	int stat;
 	
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	
-	stat = getattr_1(arg, &res, clnt);
+	plog_entry_location(__FUNCTION__, "attr");
+	stat = cm_getattr(arg, &res, host);
 	
 	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
+	//staterr&xdr_free
+	
+	if (res.res != 0) {
+		return res.res;
 	}
-		
+
+	(*stbuf).st_ino = res.stbuf.ino;
 	(*stbuf).st_mode = res.stbuf.mode;
 	(*stbuf).st_nlink = res.stbuf.nlink;
+	(*stbuf).st_uid = res.stbuf.uid;
+	(*stbuf).st_gid = res.stbuf.gid;
+	(*stbuf).st_rdev = res.stbuf.rdev;
 	(*stbuf).st_size = res.stbuf.size;
 	(*stbuf).st_atime = res.stbuf.atime;
 	(*stbuf).st_mtime = res.stbuf.mtime;
 	(*stbuf).st_ctime = res.stbuf.ctime;
+	(*stbuf).st_blocks = res.stbuf.blocks;
+	(*stbuf).st_dev = res.stbuf.dev;
+	(*stbuf).st_blksize = res.stbuf.blksize;
 
-	clnt_destroy(clnt);
 	return 0;
-
 }
 
 static int ne_access(const char *path, int mask)
@@ -124,6 +122,7 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 			break;
 	}
 
+	//xdrfree();
 	return 0;
 }
 
@@ -149,32 +148,18 @@ static int ne_mknod(const char *path, mode_t mode, dev_t rdev)
 
 static int ne_mkdir(const char *path, mode_t mode)
 {
-	CLIENT *clnt;
 	static ne_mkdir_res res;
 	ne_mkdir_arg arg;
 	int stat;
 	
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	
-	stat = mkdir_1(arg, &res, clnt);
+	plog_entry_location(__FUNCTION__, "aaa");
+	stat = cm_mkdir(arg, &res, host);
+	//TODO:staterr
 
-	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
-	
-	clnt_destroy(clnt);
-
+	//xdr_free();
 	return 0;
 }
 
@@ -191,31 +176,17 @@ static int ne_unlink(const char *path)
 
 static int ne_rmdir(const char *path)
 {
-	CLIENT *clnt;
 	static ne_rmdir_res res;
 	ne_rmdir_arg arg;
 	int stat;
 
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	
-	stat = rmdir_1(arg, &res, clnt);
+	stat = cm_rmdir(arg, &res, host);
 
 	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
-	
-	clnt_destroy(clnt);
+	//xdrfree&staterr
 
 	return 0;
 }
@@ -305,71 +276,42 @@ static int ne_utimens(const char *path, const struct timespec ts[2])
 
 static int ne_open(const char *path, struct fuse_file_info *fi)
 {
-	CLIENT *clnt;
 	static ne_open_res res;
 	ne_open_arg arg;
 	int stat;
 
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	arg.flags = fi->flags;
 	
-	stat = open_1(arg, &res, clnt);
+	stat = cm_open(arg, &res, host);
 
 	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
-	
-	clnt_destroy(clnt);
+	//staterr&xdrfree
 
 	return 0;
-
 }
 
 static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-	CLIENT *clnt;
 	static ne_read_res res;
 	ne_read_arg arg;
 	int stat;
 
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	arg.size = size;
 	arg.offset = offset;
 	
-	stat = read_1(arg, &res, clnt);
+	stat = cs_read(arg, &res, host);
 
 	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
+	//staterr&xdrfree
 	
 	size = res.res;
 
 	memcpy(buf, res.buf, size);
-
-	clnt_destroy(clnt);
 
 	return size;
 }
@@ -377,36 +319,22 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 static int ne_write(const char *path, const char *buf, size_t size,
 		     off_t offset, struct fuse_file_info *fi)
 {
-	CLIENT *clnt;
 	static ne_write_res res;
 	ne_write_arg arg;
 	int stat;
 
 	memset((char *)&res, 0, sizeof(res));
-
-	clnt = clnt_create(host, NEFSPROG, NEFSVERS, "tcp");
-	//TODO:clnt == NULL
-	if (clnt == NULL) {
-		plog_entry_location(__FUNCTION__, "clnt NULL");
-		return -errno;
-	}
-	
 	arg.path = strdup(path);
 	arg.size = size;
 	arg.offset = offset;
 	arg.buf = strdup(buf);
 	
-	stat = write_1(arg, &res, clnt);
+	stat = cs_write(arg, &res, host);
 
 	//TODO:
-	if (stat != RPC_SUCCESS) {
-		print_rpccall_err(__FUNCTION__, stat);
-		return -errno;
-	}
+	//staterr&xdrfree
 	
 	size = res.res;
-
-	clnt_destroy(clnt);
 
 	return size;
 }
