@@ -382,7 +382,7 @@ int cs_read(ne_read_arg arg, ne_read_res *res, char *ip)
 	CLIENT *clnt;
 	int stat;
 
-	clnt = clnt_create(ip, NEFSPROG, NEFSVERS, "tcp");
+	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
 
 	//TODO:clnt == NULL
 	if (clnt == NULL) {
@@ -390,6 +390,7 @@ int cs_read(ne_read_arg arg, ne_read_res *res, char *ip)
 	}
 
 	stat = read_1(arg, res, clnt);
+	plog_entry_location(__FUNCTION__, res->buf);
 
 	//TODO:
 	if (stat != RPC_SUCCESS) {
@@ -407,7 +408,7 @@ int cs_write(ne_write_arg arg, ne_write_res *res, char *ip)
 	CLIENT *clnt;
 	int stat;
 
-	clnt = clnt_create(ip, NEFSPROG, NEFSVERS, "tcp");
+	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
 
 	//TODO:clnt == NULL
 	if (clnt == NULL) {

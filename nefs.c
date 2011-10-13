@@ -424,8 +424,11 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	//staterr&xdrfree
 	
 	size = res.res;
+	plog_entry_location(__FUNCTION__, res.buf);
+	plog_mode_location(__FUNCTION__, size);
 
 	memcpy(buf, res.buf, size);
+	plog_entry_location(__FUNCTION__, buf);
 
 	return size;
 }

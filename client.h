@@ -1,5 +1,5 @@
-#include "nefs.h"
-
+#include "nefs_cs.h"
+#include "nefs_cm.h"
 
 extern int cm_getattr(ne_getattr_arg , ne_getattr_res *, char *);
 extern int cm_access(ne_access_arg , ne_access_res *, char *);

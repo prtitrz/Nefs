@@ -166,7 +166,7 @@ struct ne_open_arg {
 struct ne_open_res {
 	int res;
 };
-
+/*
 struct ne_read_arg {
 	string path<>;
 	uint64_t size;
@@ -188,6 +188,7 @@ struct ne_write_arg {
 struct ne_write_res {
 	int res;
 };
+*/
 
 struct ne_statfs_arg {
 	int res;
@@ -215,8 +216,8 @@ program NEFSPROG {
 		ne_truncate_res TRUNCATE(ne_truncate_arg) = 14;
 		ne_utimens_res UTIMENS(ne_utimens_arg) = 15;
 		ne_open_res OPEN(ne_open_arg) = 16;
-		ne_read_res READ(ne_read_arg) = 17;
-		ne_write_res WRITE(ne_write_arg) = 18;
+/*		ne_read_res READ(ne_read_arg) = 17;
+		ne_write_res WRITE(ne_write_arg) = 18;*/
 		ne_statfs_res STATFS(ne_statfs_arg) = 19;
 	} = 1;
 } = 17770;
