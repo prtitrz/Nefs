@@ -38,10 +38,12 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 
 	res->res = lstat(arg.path, &stbuf);
 
-	plog_entry_location(__FUNCTION__, path);
+	printf("%s\n", arg.path);
+//	plog_entry_location(__FUNCTION__, arg.path);
 	res->stbuf.dev = stbuf.st_dev;
 	res->stbuf.ino = stbuf.st_ino;
 	res->stbuf.mode = stbuf.st_mode;
+	printf("%u\n", stbuf.st_mode);
 	res->stbuf.nlink = stbuf.st_nlink;
 	res->stbuf.uid = stbuf.st_uid;
 	res->stbuf.gid = stbuf.st_gid;
@@ -53,10 +55,8 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 	res->stbuf.blksize = stbuf.st_blksize;
 	res->stbuf.blocks = stbuf.st_blocks;
 
-	if (res->res == -1){
+	if (res->res == -1)
 		res->res = -errno;
-		return TRUE;
-	}
 
 	return TRUE;
 }
@@ -110,12 +110,16 @@ bool_t mknod_1_svc(ne_mknod_arg arg, ne_mknod_res *res, struct svc_req *req)
 bool_t mkdir_1_svc(ne_mkdir_arg arg, ne_mkdir_res *res, struct svc_req *req)
 {
 	char path[PATH_MAX];
+	//unsigned int temp = 16877;
 
 	//set_path(path, arg.path);
 	res->res = mkdir(arg.path, arg.mode);
-	if (res->res == -1) {
-		return TRUE;
-	}
+	if (res->res == -1) 
+		res->res = -errno;
+	
+	//printf("%s\n", arg.path);
+	//printf("%u\n", (unsigned int)arg.mode);
+
 	return TRUE;
 }
 

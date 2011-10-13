@@ -1,13 +1,13 @@
-/* according <sys/type.h> and /arch/x86/include/asm/stat.h */
+/* according <sys/type.h> , <bits/types.h> and <bits/typesizes.h> */
 
 /* according man 2 stat */
 struct nefs_stat {
 	uint64_t dev;
 	uint64_t ino;
-	uint32_t mode;
+	unsigned int mode;
 	uint32_t nlink;
-	uint32_t uid;
-	uint32_t gid;
+	unsigned int uid;
+	unsigned int gid;
 	uint64_t rdev;
 	uint64_t size;
 	uint64_t atime;
@@ -67,7 +67,7 @@ struct ne_mknod_res {
 
 struct ne_mkdir_arg {
 	string path<>;
-	uint32_t mode;
+	unsigned int mode;
 };
 
 struct ne_mkdir_res {

@@ -61,8 +61,11 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	(*stbuf).st_mtime = res.stbuf.mtime;
 	(*stbuf).st_ctime = res.stbuf.ctime;
 	(*stbuf).st_blocks = res.stbuf.blocks;
-	(*stbuf).st_dev = res.stbuf.dev;
-	(*stbuf).st_blksize = res.stbuf.blksize;
+	//(*stbuf).st_dev = res.stbuf.dev;
+	//(*stbuf).st_blksize = res.stbuf.blksize;
+
+	(*stbuf).st_dev = 0;
+	(*stbuf).st_blksize = 0;
 
 	if (res.res != 0) {
 		return res.res;
@@ -153,6 +156,7 @@ static int ne_mkdir(const char *path, mode_t mode)
 	
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
+	arg.mode = mode;
 	
 	stat = cm_mkdir(arg, &res, host);
 	//TODO:staterr

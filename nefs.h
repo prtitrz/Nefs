@@ -18,10 +18,10 @@ extern "C" {
 struct nefs_stat {
 	uint64_t dev;
 	uint64_t ino;
-	uint32_t mode;
+	u_int mode;
 	uint32_t nlink;
-	uint32_t uid;
-	uint32_t gid;
+	u_int uid;
+	u_int gid;
 	uint64_t rdev;
 	uint64_t size;
 	uint64_t atime;
@@ -92,7 +92,7 @@ typedef struct ne_mknod_res ne_mknod_res;
 
 struct ne_mkdir_arg {
 	char *path;
-	uint32_t mode;
+	u_int mode;
 };
 typedef struct ne_mkdir_arg ne_mkdir_arg;
 

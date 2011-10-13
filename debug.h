@@ -19,6 +19,7 @@
 extern void plog(const char *format, ...);
 extern void plog_err(const char *func, const char *info);
 extern void plog_entry_location(const char * func, const char *path);
+void plog_mode_location(const char * func, const unsigned int mode);
 extern void plog_exit_status(const char * func, const char *path, int status);
 extern void print_rpccall_err(const char *func, enum clnt_stat num);
 extern void plog_read(const char *path, char *buf, off_t offset, size_t size);

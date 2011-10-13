@@ -66,6 +66,11 @@ void plog_entry_location(const char * func, const char *path)
 	plog("IN: [%s]:%s", func, path);
 }
 
+void plog_mode_location(const char * func, const unsigned int mode)
+{	
+	plog("IN: [%s]:%u", func, mode);
+}
+
 void plog_exit_status(const char * func, const char *path, int status)
 {
 	plog("OUT: [%s]:%s, STATUS: %d", func, path, status);
