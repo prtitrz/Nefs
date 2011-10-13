@@ -20,7 +20,7 @@
 #include "nefs.h"
 #include "debug.h"
 
-char *MASTER_PATH = "/tmp/fuse";
+char *MASTER_PATH = "/home/rz/master";
 
 static void set_path(char* realpath, const char *path)
 {
@@ -34,16 +34,16 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 	static struct stat stbuf;
 
 	memset((char *)&stbuf, 0, sizeof(stbuf));
-	//set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	res->res = lstat(arg.path, &stbuf);
+	res->res = lstat(path, &stbuf);
 
-	printf("%s\n", arg.path);
+	printf("getattr_svc:%s\n", path);
 //	plog_entry_location(__FUNCTION__, arg.path);
 	res->stbuf.dev = stbuf.st_dev;
 	res->stbuf.ino = stbuf.st_ino;
 	res->stbuf.mode = stbuf.st_mode;
-	printf("%u\n", stbuf.st_mode);
+//	printf("%u\n", stbuf.st_mode);
 	res->stbuf.nlink = stbuf.st_nlink;
 	res->stbuf.uid = stbuf.st_uid;
 	res->stbuf.gid = stbuf.st_gid;
@@ -63,11 +63,29 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 
 bool_t access_1_svc(ne_access_arg arg, ne_access_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = access(path, arg.mask);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t readlink_1_svc(ne_readlink_arg arg, ne_readlink_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = readlink(path, res->buf, arg.size - 1);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
@@ -79,9 +97,9 @@ bool_t readdir_1_svc(ne_readdir_arg arg, ne_readdir_res *res, struct svc_req *re
 	ne_dirent *p;
 	char path[PATH_MAX];
 
-	//set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	dp = opendir(arg.path);
+	dp = opendir(path);
 	//TODO
 	if (dp == NULL) {
 		return TRUE;
@@ -104,6 +122,24 @@ bool_t readdir_1_svc(ne_readdir_arg arg, ne_readdir_res *res, struct svc_req *re
 
 bool_t mknod_1_svc(ne_mknod_arg arg, ne_mknod_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	/* On Linux this could just be 'mknod(path, mode, rdev)' but this
+	   is more portable */
+	if (S_ISREG(arg.mode)) {
+		res->res = open(path, O_CREAT | O_EXCL | O_WRONLY, arg.mode);
+		if (res->res >= 0)
+			res->res = close(res->res);
+	} else if (S_ISFIFO(arg.mode))
+		res->res = mkfifo(path, arg.mode);
+	else
+		res->res = mknod(path, arg.mode, arg.rdev);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
@@ -112,8 +148,8 @@ bool_t mkdir_1_svc(ne_mkdir_arg arg, ne_mkdir_res *res, struct svc_req *req)
 	char path[PATH_MAX];
 	//unsigned int temp = 16877;
 
-	//set_path(path, arg.path);
-	res->res = mkdir(arg.path, arg.mode);
+	set_path(path, arg.path);
+	res->res = mkdir(path, arg.mode);
 	if (res->res == -1) 
 		res->res = -errno;
 	
@@ -125,11 +161,31 @@ bool_t mkdir_1_svc(ne_mkdir_arg arg, ne_mkdir_res *res, struct svc_req *req)
 
 bool_t symlink_1_svc(ne_symlink_arg arg, ne_symlink_res *res, struct svc_req *req)
 {
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, arg.from);
+	set_path(to, arg.to);
+
+	res->res = symlink(from, to);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t unlink_1_svc(ne_unlink_arg arg, ne_unlink_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = unlink(path);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
@@ -137,37 +193,87 @@ bool_t rmdir_1_svc(ne_rmdir_arg arg, ne_rmdir_res *res, struct svc_req *req)
 {
 	char path[PATH_MAX];
 
-	//set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	res->res = rmdir(arg.path);
-	if (res->res == -1) {
-		return TRUE;
-	}
+	res->res = rmdir(path);
+
+	if (res->res == -1) 
+		res->res = -errno;
+	
 	return TRUE;
 }
 
 bool_t rename_1_svc(ne_rename_arg arg, ne_rename_res *res, struct svc_req *req)
 {
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, arg.from);
+	set_path(to, arg.to);
+
+	res->res = rename(from, to);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t link_1_svc(ne_link_arg arg, ne_link_res *res, struct svc_req *req)
 {
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, arg.from);
+	set_path(to, arg.to);
+
+	res->res = link(from, to);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t chmod_1_svc(ne_chmod_arg arg, ne_chmod_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = chmod(path, arg.mode);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t chown_1_svc(ne_chown_arg arg, ne_chown_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = chown(path, arg.uid, arg.gid);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
 bool_t truncate_1_svc(ne_truncate_arg arg, ne_truncate_res *res, struct svc_req *req)
 {
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+
+	res->res = truncate(path, arg.size);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
 	return TRUE;
 }
 
@@ -180,9 +286,10 @@ bool_t open_1_svc(ne_open_arg arg, ne_open_res *res, struct svc_req *req)
 {
 	char path[PATH_MAX];
 
-	//set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	res->res = open(arg.path, arg.flags);
+	res->res = open(path, arg.flags);
+	printf("open_svc:%s\n", path);
 	
 	close(res->res);
 
@@ -194,9 +301,9 @@ bool_t read_1_svc(ne_read_arg arg, ne_read_res *res, struct svc_req *req)
 	int fd;
 	char path[PATH_MAX];
 
-//	set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	fd = open(arg.path, O_RDONLY);
+	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		return FALSE;
 	}
@@ -215,9 +322,11 @@ bool_t write_1_svc(ne_write_arg arg, ne_write_res *res, struct svc_req *req)
 	int fd;
 	char path[PATH_MAX];
 
-//	set_path(path, arg.path);
+	set_path(path, arg.path);
 
-	fd = open(arg.path, O_WRONLY);
+	printf("write_svc:%s\n", path);
+
+	fd = open(path, O_WRONLY);
 	if (fd == -1) {
 		return FALSE;
 	}

@@ -34,7 +34,8 @@ struct ne_getattr_res {
 };
 
 struct ne_access_arg {
-	int res;
+	string path<>;
+	int mask;
 };
 
 struct ne_access_res {
@@ -42,10 +43,12 @@ struct ne_access_res {
 };
 
 struct ne_readlink_arg {
-	int res;
+	string path<>;
+	uint64_t size;
 };
 
 struct ne_readlink_res {
+	string buf<>;
 	int res;
 };
 
@@ -58,7 +61,9 @@ struct ne_readdir_res {
 };
 
 struct ne_mknod_arg {
-	int res;
+	string path<>;
+	unsigned int mode;
+	uint64_t rdev;
 };
 
 struct ne_mknod_res {
@@ -75,7 +80,7 @@ struct ne_mkdir_res {
 };
 
 struct ne_unlink_arg {
-	int res;
+	string path<>;
 };
 
 struct ne_unlink_res {
@@ -91,7 +96,8 @@ struct ne_rmdir_res {
 };
 
 struct ne_symlink_arg {
-	int res;
+	string from<>;
+	string to<>;
 };
 
 struct ne_symlink_res {
@@ -99,7 +105,8 @@ struct ne_symlink_res {
 };
 
 struct ne_rename_arg {
-	int res;
+	string from<>;
+	string to<>;
 };
 
 struct ne_rename_res {
@@ -107,7 +114,8 @@ struct ne_rename_res {
 };
 
 struct ne_link_arg {
-	int res;
+	string from<>;
+	string to<>;
 };
 
 struct ne_link_res {
@@ -115,7 +123,8 @@ struct ne_link_res {
 };
 
 struct ne_chmod_arg {
-	int res;
+	string path<>;
+	unsigned int mode;
 };
 
 struct ne_chmod_res {
@@ -123,7 +132,9 @@ struct ne_chmod_res {
 };
 
 struct ne_chown_arg {
-	int res;
+	string path<>;
+	unsigned int uid;
+	unsigned int gid;
 };
 
 struct ne_chown_res {
@@ -131,7 +142,8 @@ struct ne_chown_res {
 };
 
 struct ne_truncate_arg {
-	int res;
+	string path<>;
+	uint64_t size;
 };
 
 struct ne_truncate_res {

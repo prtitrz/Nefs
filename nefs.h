@@ -51,7 +51,8 @@ struct ne_getattr_res {
 typedef struct ne_getattr_res ne_getattr_res;
 
 struct ne_access_arg {
-	int res;
+	char *path;
+	int mask;
 };
 typedef struct ne_access_arg ne_access_arg;
 
@@ -61,11 +62,13 @@ struct ne_access_res {
 typedef struct ne_access_res ne_access_res;
 
 struct ne_readlink_arg {
-	int res;
+	char *path;
+	uint64_t size;
 };
 typedef struct ne_readlink_arg ne_readlink_arg;
 
 struct ne_readlink_res {
+	char *buf;
 	int res;
 };
 typedef struct ne_readlink_res ne_readlink_res;
@@ -81,7 +84,9 @@ struct ne_readdir_res {
 typedef struct ne_readdir_res ne_readdir_res;
 
 struct ne_mknod_arg {
-	int res;
+	char *path;
+	u_int mode;
+	uint64_t rdev;
 };
 typedef struct ne_mknod_arg ne_mknod_arg;
 
@@ -102,7 +107,7 @@ struct ne_mkdir_res {
 typedef struct ne_mkdir_res ne_mkdir_res;
 
 struct ne_unlink_arg {
-	int res;
+	char *path;
 };
 typedef struct ne_unlink_arg ne_unlink_arg;
 
@@ -122,7 +127,8 @@ struct ne_rmdir_res {
 typedef struct ne_rmdir_res ne_rmdir_res;
 
 struct ne_symlink_arg {
-	int res;
+	char *from;
+	char *to;
 };
 typedef struct ne_symlink_arg ne_symlink_arg;
 
@@ -132,7 +138,8 @@ struct ne_symlink_res {
 typedef struct ne_symlink_res ne_symlink_res;
 
 struct ne_rename_arg {
-	int res;
+	char *from;
+	char *to;
 };
 typedef struct ne_rename_arg ne_rename_arg;
 
@@ -142,7 +149,8 @@ struct ne_rename_res {
 typedef struct ne_rename_res ne_rename_res;
 
 struct ne_link_arg {
-	int res;
+	char *from;
+	char *to;
 };
 typedef struct ne_link_arg ne_link_arg;
 
@@ -152,7 +160,8 @@ struct ne_link_res {
 typedef struct ne_link_res ne_link_res;
 
 struct ne_chmod_arg {
-	int res;
+	char *path;
+	u_int mode;
 };
 typedef struct ne_chmod_arg ne_chmod_arg;
 
@@ -162,7 +171,9 @@ struct ne_chmod_res {
 typedef struct ne_chmod_res ne_chmod_res;
 
 struct ne_chown_arg {
-	int res;
+	char *path;
+	u_int uid;
+	u_int gid;
 };
 typedef struct ne_chown_arg ne_chown_arg;
 
@@ -172,7 +183,8 @@ struct ne_chown_res {
 typedef struct ne_chown_res ne_chown_res;
 
 struct ne_truncate_arg {
-	int res;
+	char *path;
+	uint64_t size;
 };
 typedef struct ne_truncate_arg ne_truncate_arg;
 

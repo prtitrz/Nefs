@@ -41,6 +41,7 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	static ne_getattr_res res;
 	ne_getattr_arg arg;
 	int stat;
+	plog_entry_location(__FUNCTION__, "getattr call");
 	
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
@@ -76,24 +77,46 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 
 static int ne_access(const char *path, int mask)
 {
-	int res;
+	static ne_access_res res;
+	ne_access_arg arg;
+	int stat;
 
-	res = access(path, mask);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "access call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.mask = mask;
+	
+	stat = cm_access(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_readlink(const char *path, char *buf, size_t size)
 {
-	int res;
+	static ne_readlink_res res;
+	ne_readlink_arg arg;
+	int stat;
 
-	res = readlink(path, buf, size - 1);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "readlink call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.size = size;
+	
+	stat = cm_readlink(arg, &res, host);
 
-	buf[res] = '\0';
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
+
+	res.buf[res.res] = '\0';
 	return 0;
 }
 
@@ -109,6 +132,7 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	ne_readdir_arg arg;
 	ne_dirent *de;
 	int stat;
+	plog_entry_location(__FUNCTION__, "readdir call");
 
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
@@ -130,20 +154,23 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int ne_mknod(const char *path, mode_t mode, dev_t rdev)
 {
-	int res;
+	static ne_mknod_res res;
+	ne_mknod_arg arg;
+	int stat;
 
-	/* On Linux this could just be 'mknod(path, mode, rdev)' but this
-	   is more portable */
-	if (S_ISREG(mode)) {
-		res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
-		if (res >= 0)
-			res = close(res);
-	} else if (S_ISFIFO(mode))
-		res = mkfifo(path, mode);
-	else
-		res = mknod(path, mode, rdev);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "mknod call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.mode = mode;
+	arg.rdev = rdev;
+	
+	stat = cm_mknod(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
@@ -154,6 +181,7 @@ static int ne_mkdir(const char *path, mode_t mode)
 	ne_mkdir_arg arg;
 	int stat;
 	
+	plog_entry_location(__FUNCTION__, "mkdir call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.mode = mode;
@@ -167,11 +195,21 @@ static int ne_mkdir(const char *path, mode_t mode)
 
 static int ne_unlink(const char *path)
 {
-	int res;
+	static ne_unlink_res res;
+	ne_unlink_arg arg;
+	int stat;
 
-	res = unlink(path);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "unlink call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	
+	stat = cm_unlink(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
@@ -182,6 +220,7 @@ static int ne_rmdir(const char *path)
 	ne_rmdir_arg arg;
 	int stat;
 
+	plog_entry_location(__FUNCTION__, "rmdir call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	
@@ -195,75 +234,145 @@ static int ne_rmdir(const char *path)
 
 static int ne_symlink(const char *from, const char *to)
 {
-	int res;
+	static ne_symlink_res res;
+	ne_symlink_arg arg;
+	int stat;
 
-	res = symlink(from, to);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "symlink call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.from = strdup(from);
+	arg.to = strdup(to);
+	
+	stat = cm_symlink(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_rename(const char *from, const char *to)
 {
-	int res;
+	static ne_rename_res res;
+	ne_rename_arg arg;
+	int stat;
 
-	res = rename(from, to);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "rename call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.from = strdup(from);
+	arg.to = strdup(to);
+	
+	stat = cm_rename(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_link(const char *from, const char *to)
 {
-	int res;
+	static ne_link_res res;
+	ne_link_arg arg;
+	int stat;
 
-	res = link(from, to);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "link call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.from = strdup(from);
+	arg.to = strdup(to);
+	
+	stat = cm_link(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_chmod(const char *path, mode_t mode)
 {
-	int res;
+	static ne_chmod_res res;
+	ne_chmod_arg arg;
+	int stat;
 
-	res = chmod(path, mode);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "chmod call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.mode = mode;
+	
+	stat = cm_chmod(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_chown(const char *path, uid_t uid, gid_t gid)
 {
-	int res;
+	static ne_chown_res res;
+	ne_chown_arg arg;
+	int stat;
 
-	res = lchown(path, uid, gid);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "chown call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.uid = uid;
+	arg.gid = gid;
+	
+	stat = cm_chown(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_truncate(const char *path, off_t size)
 {
-	int res;
+	static ne_truncate_res res;
+	ne_truncate_arg arg;
+	int stat;
 
-	res = truncate(path, size);
-	if (res == -1)
-		return -errno;
+	plog_entry_location(__FUNCTION__, "truncate call");
+	memset((char *)&res, 0, sizeof(res));
+	arg.path = strdup(path);
+	arg.size = size;
+	
+	stat = cm_truncate(arg, &res, host);
+
+	//TODO:
+	//xdrfree&staterr
+
+	if (res.res != 0)
+		return res.res;
 
 	return 0;
 }
 
 static int ne_utimens(const char *path, const struct timespec ts[2])
 {
-	int res;
-	struct timeval tv[2];
+	//int res;
+	//struct timeval tv[2];
+	(void) path;
 
+	plog_entry_location(__FUNCTION__, "utimens call");
+	/* change to a stub
 	tv[0].tv_sec = ts[0].tv_sec;
 	tv[0].tv_usec = ts[0].tv_nsec / 1000;
 	tv[1].tv_sec = ts[1].tv_sec;
@@ -272,6 +381,7 @@ static int ne_utimens(const char *path, const struct timespec ts[2])
 	res = utimes(path, tv);
 	if (res == -1)
 		return -errno;
+		*/
 
 	return 0;
 }
@@ -282,6 +392,7 @@ static int ne_open(const char *path, struct fuse_file_info *fi)
 	ne_open_arg arg;
 	int stat;
 
+	plog_entry_location(__FUNCTION__, "open call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.flags = fi->flags;
@@ -301,6 +412,7 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	ne_read_arg arg;
 	int stat;
 
+	plog_entry_location(__FUNCTION__, "read call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.size = size;
@@ -325,6 +437,7 @@ static int ne_write(const char *path, const char *buf, size_t size,
 	ne_write_arg arg;
 	int stat;
 
+	plog_entry_location(__FUNCTION__, "write call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.size = size;
@@ -343,12 +456,16 @@ static int ne_write(const char *path, const char *buf, size_t size,
 
 static int ne_statfs(const char *path, struct statvfs *stbuf)
 {
-	int res;
+//	int res;
+	(void) path;
+	(void) stbuf;
 
+	plog_entry_location(__FUNCTION__, "statfs call");
+	/* change to stub
 	res = statvfs(path, stbuf);
 	if (res == -1)
 		return -errno;
-
+	*/
 	return 0;
 }
 
