@@ -327,12 +327,12 @@ int cm_chown(ne_chown_arg arg, ne_chown_res *res, char *ip)
 	return 0;
 }
 
-int cm_truncate(ne_truncate_arg arg, ne_truncate_res *res, char *ip)
+int cs_truncate(ne_truncate_arg arg, ne_truncate_res *res, char *ip)
 {
 	CLIENT *clnt;
 	int stat;
 
-	clnt = clnt_create(ip, NEFSPROG, NEFSVERS, "tcp");
+	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
 
 	//TODO:clnt == NULL
 	if (clnt == NULL) {

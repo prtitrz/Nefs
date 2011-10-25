@@ -354,7 +354,7 @@ static int ne_truncate(const char *path, off_t size)
 	arg.path = strdup(path);
 	arg.size = size;
 	
-	stat = cm_truncate(arg, &res, host);
+	stat = cs_truncate(arg, &res, host);
 
 	//TODO:
 	//xdrfree&staterr
@@ -447,6 +447,7 @@ static int ne_write(const char *path, const char *buf, size_t size,
 	arg.offset = offset;
 	arg.buf = strdup(buf);
 	
+	plog_entry_location(__FUNCTION__, arg.buf);
 	stat = cs_write(arg, &res, host);
 
 	//TODO:
@@ -479,6 +480,7 @@ static int ne_release(const char *path, struct fuse_file_info *fi)
 
 	(void) path;
 	(void) fi;
+	plog_entry_location(__FUNCTION__, "release call");
 	return 0;
 }
 
@@ -491,6 +493,7 @@ static int ne_fsync(const char *path, int isdatasync,
 	(void) path;
 	(void) isdatasync;
 	(void) fi;
+	plog_entry_location(__FUNCTION__, "fsync call");
 	return 0;
 }
 
@@ -500,6 +503,7 @@ static int ne_setxattr(const char *path, const char *name, const char *value,
 			size_t size, int flags)
 {
 	int res = lsetxattr(path, name, value, size, flags);
+	plog_entry_location(__FUNCTION__, "setxattr call");
 	if (res == -1)
 		return -errno;
 	return 0;
@@ -509,6 +513,7 @@ static int ne_getxattr(const char *path, const char *name, char *value,
 			size_t size)
 {
 	int res = lgetxattr(path, name, value, size);
+	plog_entry_location(__FUNCTION__, "getxattr call");
 	if (res == -1)
 		return -errno;
 	return res;
@@ -517,6 +522,7 @@ static int ne_getxattr(const char *path, const char *name, char *value,
 static int ne_listxattr(const char *path, char *list, size_t size)
 {
 	int res = llistxattr(path, list, size);
+	plog_entry_location(__FUNCTION__, "listxattr call");
 	if (res == -1)
 		return -errno;
 	return res;
@@ -525,6 +531,7 @@ static int ne_listxattr(const char *path, char *list, size_t size)
 static int ne_removexattr(const char *path, const char *name)
 {
 	int res = lremovexattr(path, name);
+	plog_entry_location(__FUNCTION__, "removexattr call");
 	if (res == -1)
 		return -errno;
 	return 0;

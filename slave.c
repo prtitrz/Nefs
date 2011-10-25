@@ -1,9 +1,26 @@
 #include "slave.h"
 
+#define RWRWRW (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)
+
 static void set_path(char* realpath, const char *path)
 {
 	strcpy(realpath, SLAVE_PATH);
 	strncat(realpath, path, PATH_MAX);
+}
+
+bool_t truncate_1_svc(ne_truncate_arg arg, ne_truncate_res *res, struct svc_req *req)
+{
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+	printf("trun_svc:%s\n", path);
+
+	res->res = truncate(path, arg.size);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
+	return TRUE;
 }
 
 bool_t read_1_svc(ne_read_arg arg, ne_read_res *res, struct svc_req *req)
@@ -12,7 +29,8 @@ bool_t read_1_svc(ne_read_arg arg, ne_read_res *res, struct svc_req *req)
 	char path[PATH_MAX];
 
 	set_path(path, arg.path);
-
+	
+	printf("read_svc:%s\n", path);
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		return FALSE;
@@ -37,7 +55,7 @@ bool_t write_1_svc(ne_write_arg arg, ne_write_res *res, struct svc_req *req)
 
 	printf("write_svc:%s\n", path);
 
-	fd = open(path, O_WRONLY);
+	fd = open(path, O_WRONLY | O_CREAT, RWRWRW);
 	if (fd == -1) {
 		return FALSE;
 	}
