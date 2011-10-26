@@ -182,6 +182,17 @@ struct ne_chown_res {
 };
 typedef struct ne_chown_res ne_chown_res;
 
+struct ne_truncate_arg {
+	char *path;
+	uint64_t size;
+};
+typedef struct ne_truncate_arg ne_truncate_arg;
+
+struct ne_truncate_res {
+	int res;
+};
+typedef struct ne_truncate_res ne_truncate_res;
+
 struct ne_utimens_arg {
 	int res;
 };
@@ -256,6 +267,9 @@ extern  bool_t chmod_1_svc(ne_chmod_arg , ne_chmod_res *, struct svc_req *);
 #define CHOWN 13
 extern  enum clnt_stat chown_1(ne_chown_arg , ne_chown_res *, CLIENT *);
 extern  bool_t chown_1_svc(ne_chown_arg , ne_chown_res *, struct svc_req *);
+#define TRUNCATE 14
+extern  enum clnt_stat truncate_1(ne_truncate_arg , ne_truncate_res *, CLIENT *);
+extern  bool_t truncate_1_svc(ne_truncate_arg , ne_truncate_res *, struct svc_req *);
 #define UTIMENS 15
 extern  enum clnt_stat utimens_1(ne_utimens_arg , ne_utimens_res *, CLIENT *);
 extern  bool_t utimens_1_svc(ne_utimens_arg , ne_utimens_res *, struct svc_req *);
@@ -307,6 +321,9 @@ extern  bool_t chmod_1_svc();
 #define CHOWN 13
 extern  enum clnt_stat chown_1();
 extern  bool_t chown_1_svc();
+#define TRUNCATE 14
+extern  enum clnt_stat truncate_1();
+extern  bool_t truncate_1_svc();
 #define UTIMENS 15
 extern  enum clnt_stat utimens_1();
 extern  bool_t utimens_1_svc();
@@ -350,6 +367,8 @@ extern  bool_t xdr_ne_chmod_arg (XDR *, ne_chmod_arg*);
 extern  bool_t xdr_ne_chmod_res (XDR *, ne_chmod_res*);
 extern  bool_t xdr_ne_chown_arg (XDR *, ne_chown_arg*);
 extern  bool_t xdr_ne_chown_res (XDR *, ne_chown_res*);
+extern  bool_t xdr_ne_truncate_arg (XDR *, ne_truncate_arg*);
+extern  bool_t xdr_ne_truncate_res (XDR *, ne_truncate_res*);
 extern  bool_t xdr_ne_utimens_arg (XDR *, ne_utimens_arg*);
 extern  bool_t xdr_ne_utimens_res (XDR *, ne_utimens_res*);
 extern  bool_t xdr_ne_open_arg (XDR *, ne_open_arg*);
@@ -386,6 +405,8 @@ extern bool_t xdr_ne_chmod_arg ();
 extern bool_t xdr_ne_chmod_res ();
 extern bool_t xdr_ne_chown_arg ();
 extern bool_t xdr_ne_chown_res ();
+extern bool_t xdr_ne_truncate_arg ();
+extern bool_t xdr_ne_truncate_res ();
 extern bool_t xdr_ne_utimens_arg ();
 extern bool_t xdr_ne_utimens_res ();
 extern bool_t xdr_ne_open_arg ();

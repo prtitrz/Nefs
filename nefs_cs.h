@@ -15,17 +15,6 @@ extern "C" {
 #endif
 
 
-struct ne_truncate_arg {
-	char *path;
-	uint64_t size;
-};
-typedef struct ne_truncate_arg ne_truncate_arg;
-
-struct ne_truncate_res {
-	int res;
-};
-typedef struct ne_truncate_res ne_truncate_res;
-
 struct ne_read_arg {
 	char *path;
 	uint64_t size;
@@ -56,25 +45,19 @@ typedef struct ne_write_res ne_write_res;
 #define CSVERS 1
 
 #if defined(__STDC__) || defined(__cplusplus)
-#define TRUNCATE 1
-extern  enum clnt_stat truncate_1(ne_truncate_arg , ne_truncate_res *, CLIENT *);
-extern  bool_t truncate_1_svc(ne_truncate_arg , ne_truncate_res *, struct svc_req *);
-#define READ 2
+#define READ 1
 extern  enum clnt_stat read_1(ne_read_arg , ne_read_res *, CLIENT *);
 extern  bool_t read_1_svc(ne_read_arg , ne_read_res *, struct svc_req *);
-#define WRITE 3
+#define WRITE 2
 extern  enum clnt_stat write_1(ne_write_arg , ne_write_res *, CLIENT *);
 extern  bool_t write_1_svc(ne_write_arg , ne_write_res *, struct svc_req *);
 extern int csprog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
-#define TRUNCATE 1
-extern  enum clnt_stat truncate_1();
-extern  bool_t truncate_1_svc();
-#define READ 2
+#define READ 1
 extern  enum clnt_stat read_1();
 extern  bool_t read_1_svc();
-#define WRITE 3
+#define WRITE 2
 extern  enum clnt_stat write_1();
 extern  bool_t write_1_svc();
 extern int csprog_1_freeresult ();
@@ -83,16 +66,12 @@ extern int csprog_1_freeresult ();
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-extern  bool_t xdr_ne_truncate_arg (XDR *, ne_truncate_arg*);
-extern  bool_t xdr_ne_truncate_res (XDR *, ne_truncate_res*);
 extern  bool_t xdr_ne_read_arg (XDR *, ne_read_arg*);
 extern  bool_t xdr_ne_read_res (XDR *, ne_read_res*);
 extern  bool_t xdr_ne_write_arg (XDR *, ne_write_arg*);
 extern  bool_t xdr_ne_write_res (XDR *, ne_write_res*);
 
 #else /* K&R C */
-extern bool_t xdr_ne_truncate_arg ();
-extern bool_t xdr_ne_truncate_res ();
 extern bool_t xdr_ne_read_arg ();
 extern bool_t xdr_ne_read_res ();
 extern bool_t xdr_ne_write_arg ();

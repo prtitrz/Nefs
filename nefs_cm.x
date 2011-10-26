@@ -140,7 +140,7 @@ struct ne_chown_arg {
 struct ne_chown_res {
 	int res;
 };
-/*
+
 struct ne_truncate_arg {
 	string path<>;
 	uint64_t size;
@@ -149,7 +149,7 @@ struct ne_truncate_arg {
 struct ne_truncate_res {
 	int res;
 };
-*/
+
 struct ne_utimens_arg {
 	int res;
 };
@@ -213,7 +213,7 @@ program NEFSPROG {
 		ne_link_res LINK(ne_link_arg) = 11;
 		ne_chmod_res CHMOD(ne_chmod_arg) = 12;
 		ne_chown_res CHOWN(ne_chown_arg) = 13;
-/*		ne_truncate_res TRUNCATE(ne_truncate_arg) = 14;*/
+		ne_truncate_res TRUNCATE(ne_truncate_arg) = 14;
 		ne_utimens_res UTIMENS(ne_utimens_arg) = 15;
 		ne_open_res OPEN(ne_open_arg) = 16;
 /*		ne_read_res READ(ne_read_arg) = 17;

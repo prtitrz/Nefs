@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include <limits.h>
 #include <stdlib.h>
-#include "nefs.h"
+#include "nefs_cm.h"
 #include "debug.h"
 
 const char *MASTER_PATH = "/home/rz/master";

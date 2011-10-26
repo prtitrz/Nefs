@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include <limits.h>
 #include <stdlib.h>
-#include "nefs.h"
+#include "nefs_cs.h"
 #include "debug.h"
 
 const char *SLAVE_PATH = "/home/rz/slave";
