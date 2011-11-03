@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "fec.h"
+#include "easyfec.h"
 
 /*
  * The smallest integer k such that k*d >= n.

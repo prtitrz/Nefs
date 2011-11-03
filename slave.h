@@ -11,4 +11,4 @@
 #include "nefs_cs.h"
 #include "debug.h"
 
-const char *SLAVE_PATH = "/home/rz/slave";
+const char *SLAVE_PATH = "/root/Slave";

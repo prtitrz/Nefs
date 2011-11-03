@@ -33,9 +33,13 @@
 //#include "nefs.h"
 #include "debug.h"
 #include "client.h"
+#include "easyfec.h"
+
+#define K 1
+#define M 3
 	
-char *master = "127.0.0.1";
-char *slave = "127.0.0.1";
+char *master = "192.168.0.83";
+char *slave[M] = {"192.168.0.84", "127.0.0.1", "192.168.0.83"};
 uint64_t test;
 
 static int ne_getattr(const char *path, struct stat *stbuf)
@@ -60,6 +64,7 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	(*stbuf).st_gid = res.stbuf.gid;
 	(*stbuf).st_rdev = res.stbuf.rdev;
 	(*stbuf).st_size = res.stbuf.size;
+	test = res.stbuf.size;
 	(*stbuf).st_atime = res.stbuf.atime;
 	(*stbuf).st_mtime = res.stbuf.mtime;
 	(*stbuf).st_ctime = res.stbuf.ctime;
@@ -414,28 +419,74 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	static ne_read_res res;
 	ne_read_arg arg;
 	(void) fi;
-	int stat;
+	int stat, i, j, miss, l;
+	char *data;
+	char *output;
+	unsigned index[K];
+	int temp[M];
+
+	test = test - 1;
 
 	plog_entry_location(__FUNCTION__, "read call");
 	memset((char *)&res, 0, sizeof(res));
+	data = (char *)malloc((M * test + 1) * sizeof(char));
 	arg.path = strdup(path);
 	arg.size = size;
 	arg.offset = offset;
 	
-	stat = cs_read(arg, &res, slave);
+	plog_mode_location(__FUNCTION__, size);
+	plog_mode_location(__FUNCTION__, test);
+
+	for (i = 0; i < M; i++) {
+		stat = cs_read(arg, &res, slave[i]);
+		temp[i] = -stat;
+		if (!stat) {
+	//		temp[i] = i;
+			for (j = 0; j < test; j++) {
+				data[i * test + j] = res.buf[j];
+			}
+		}
+		else {
+	//		temp[i] = -1;
+			for (j = 0; j < size; j++) {
+				data[i * test + j] = 'x';
+			}		
+		}
+		plog_entry_location(__FUNCTION__, data);
+	}
+	data[M * test] = '\0';
+	index[0] = 1;
+	/*
+	for (i = 0; i < K; i++) {
+		if (temp[i] != i)
+		{
+			//FIXME
+			for (j = l; j < M; j++) {
+				if (temp[j] == j) {
+					index[i] = j;
+					l = j + 1;
+					break;
+				}
+			}
+		}
+		else {
+			index[i] = i;
+		}
+	}
+	*/
+
 
 	//TODO:
 	//staterr&xdrfree
+//	miss = cal_miss(index, K);
 	
+	output = decode(data, K, M, index, 1, test);
 	size = res.res;
-	plog_entry_location(__FUNCTION__, res.buf);
-
-	//memset(buf, 0, size);
-	//plog_entry_location(__FUNCTION__, buf);
-	memcpy(buf, res.buf, size);
+	plog_entry_location(__FUNCTION__, output);
+	memcpy(buf, output, size);
 	//buf = strdup(res.buf);
 	//buf[size] = '\0';
-	plog_entry_location(__FUNCTION__, buf);
+	//plog_entry_location(__FUNCTION__, buf);
 
 	return size;
 }
@@ -445,25 +496,35 @@ static int ne_write(const char *path, const char *buf, size_t size,
 {
 	static ne_write_res res;
 	ne_write_arg arg;
-	int stat;
+	int stat, i, chunksize;
+	char *output;
 	(void) fi;
 
 	plog_entry_location(__FUNCTION__, "write call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
-	arg.size = size;
+//	arg.size = size;
 	arg.offset = offset;
-	arg.buf = strdup(buf);
+//	arg.buf = strdup(buf);
+	plog_mode_location(__FUNCTION__, size);
+
+	chunksize = div_ceil(size, K);
+	arg.size = chunksize;
+	output = encode(buf, K, M, chunksize);
 	
-	plog_entry_location(__FUNCTION__, arg.buf);
-	stat = cs_write(arg, &res, slave);
+	plog_entry_location(__FUNCTION__, output);
+
+	for (i = 0; i < M; i++) {
+		arg.buf = strndup(output + (i * chunksize), chunksize);
+		stat = cs_write(arg, &res, slave[i]);
+	}
 
 	//TODO:
 	//staterr&xdrfree
 	
-	size = res.res;
+//	size = res.res;
 	test = size;
-	plog_mode_location(__FUNCTION__, size);
+	free(output);
 
 	return size;
 }
@@ -598,5 +659,6 @@ static struct fuse_operations ne_oper = {
 int main(int argc, char *argv[])
 {
 	umask(0);
+	plog_entry_location(__FUNCTION__, "test");
 	return fuse_main(argc, argv, &ne_oper, NULL);
 }

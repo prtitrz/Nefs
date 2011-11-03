@@ -11,4 +11,4 @@
 #include "nefs_cm.h"
 #include "debug.h"
 
-const char *MASTER_PATH = "/home/rz/master";
+const char *MASTER_PATH = "/root/Master";

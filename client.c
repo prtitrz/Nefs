@@ -381,12 +381,19 @@ int cs_read(ne_read_arg arg, ne_read_res *res, char *ip)
 {
 	CLIENT *clnt;
 	int stat;
+//	struct timeval tv;
+
+//	tv.tv_sec = 3;
+//	tv.tv_usec = 0;
 
 	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
+
+//	clnt_control(clnt, CLSET_TIMEOUT, (char *)&tv);
 
 	//TODO:clnt == NULL
 	if (clnt == NULL) {
 		plog_entry_location(__FUNCTION__, "clnt NULL");
+		return 1;
 	}
 
 	stat = read_1(arg, res, clnt);
@@ -395,6 +402,7 @@ int cs_read(ne_read_arg arg, ne_read_res *res, char *ip)
 	//TODO:
 	if (stat != RPC_SUCCESS) {
 		print_rpccall_err(__FUNCTION__, stat);
+		clnt_destroy(clnt);
 		return 1;
 	}
 

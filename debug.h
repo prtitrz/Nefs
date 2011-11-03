@@ -13,8 +13,8 @@
 
 #define DEBUG 1//debug switch
 
-#define LOG "/home/rz/log"	//client log:record the error
-#define RD_FILE "/home/rz/read"
+#define LOG "/root/log"	//client log:record the error
+#define RD_FILE "/root/read"
 
 extern void plog(const char *format, ...);
 extern void plog_err(const char *func, const char *info);

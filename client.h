@@ -1,3 +1,4 @@
+#include <time.h>
 #include "nefs_cs.h"
 #include "nefs_cm.h"
 
