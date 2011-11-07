@@ -273,7 +273,7 @@ bool_t open_1_svc(ne_open_arg arg, ne_open_res *res, struct svc_req *req)
 
 	return TRUE;
 }
-
+/*
 bool_t truncate_1_svc(ne_truncate_arg arg, ne_truncate_res *res, struct svc_req *req)
 {
 	char path[PATH_MAX];
@@ -288,7 +288,7 @@ bool_t truncate_1_svc(ne_truncate_arg arg, ne_truncate_res *res, struct svc_req 
 
 	return TRUE;
 }
-
+*/
 bool_t statfs_1_svc(ne_statfs_arg arg, ne_statfs_res *res, struct svc_req *req)
 {
 	return TRUE;

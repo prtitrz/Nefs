@@ -53,6 +53,39 @@ bool_t write_1_svc(ne_write_arg arg, ne_write_res *res, struct svc_req *req)
 	return TRUE;
 }
 
+bool_t readsize_1_svc(ne_readsize_arg arg, ne_readsize_res *res, struct svc_req *req)
+{
+	char path[PATH_MAX];
+	static struct stat stbuf;
+
+	memset((char *)&stbuf, 0, sizeof(stbuf));
+
+	set_path(path, arg.path);
+
+	printf("readsize_svc:%s\n", path);
+
+	res->res = lstat(path, &stbuf);
+
+	res->size = stbuf.st_size;
+
+	return TRUE;
+}
+
+bool_t truncate_1_svc(ne_truncate_arg arg, ne_truncate_res *res, struct svc_req *req)
+{
+	char path[PATH_MAX];
+
+	set_path(path, arg.path);
+	printf("trun_svc:%s\n", path);
+
+	res->res = truncate(path, arg.size);
+
+	if (res->res == -1) 
+		res->res = -errno;
+
+	return TRUE;
+}
+
 //FIXME
 int csprog_1_freeresult(SVCXPRT *transp, xdrproc_t xdr_result, caddr_t result)
 {

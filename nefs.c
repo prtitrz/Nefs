@@ -41,11 +41,14 @@
 char *master = "192.168.0.83";
 char *slave[M] = {"192.168.0.84", "127.0.0.1", "192.168.0.83"};
 uint64_t test;
+int dirty = 0;
 
 static int ne_getattr(const char *path, struct stat *stbuf)
 {
 	static ne_getattr_res res;
 	ne_getattr_arg arg;
+	static ne_readsize_res res2;
+	ne_readsize_arg arg2;
 	int stat;
 	plog_entry_location(__FUNCTION__, "getattr call");
 	
@@ -54,17 +57,30 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	
 	stat = cm_getattr(arg, &res, master);
 	
+	memset((char *)&res2, 0, sizeof(res2));
+	arg2.path = strdup(path);
+	
+	stat = cm_getattr(arg, &res, master);
+	stat = cs_readsize(arg2, &res2, slave[0]);
 	//TODO:
 	//staterr&xdr_free
 
+	if (res.res != 0) {
+		return res.res;
+	}
+	
 	(*stbuf).st_ino = res.stbuf.ino;
 	(*stbuf).st_mode = res.stbuf.mode;
 	(*stbuf).st_nlink = res.stbuf.nlink;
 	(*stbuf).st_uid = res.stbuf.uid;
 	(*stbuf).st_gid = res.stbuf.gid;
 	(*stbuf).st_rdev = res.stbuf.rdev;
-	(*stbuf).st_size = res.stbuf.size;
-	test = res.stbuf.size;
+//	(*stbuf).st_size = res.stbuf.size;
+//	test = res.stbuf.size;
+
+	(*stbuf).st_size = res2.size;
+	test = res2.size;
+
 	(*stbuf).st_atime = res.stbuf.atime;
 	(*stbuf).st_mtime = res.stbuf.mtime;
 	(*stbuf).st_ctime = res.stbuf.ctime;
@@ -74,10 +90,6 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 
 	(*stbuf).st_dev = 0;
 	(*stbuf).st_blksize = 0;
-
-	if (res.res != 0) {
-		return res.res;
-	}
 
 	return 0;
 }
@@ -354,7 +366,7 @@ static int ne_truncate(const char *path, off_t size)
 {
 	static ne_truncate_res res;
 	ne_truncate_arg arg;
-	int stat;
+	int stat, i;
 
 	plog_entry_location(__FUNCTION__, "truncate call");
 	memset((char *)&res, 0, sizeof(res));
@@ -362,11 +374,14 @@ static int ne_truncate(const char *path, off_t size)
 	arg.size = size;
 	plog_mode_location(__FUNCTION__, size);
 	
-	stat = cm_truncate(arg, &res, master);
+	for (i = 0; i < M; i++) {
+		stat = cs_truncate(arg, &res, slave[i]);
+	}
 
 	//TODO:
 	//xdrfree&staterr
 
+	//FIXME
 	if (res.res != 0)
 		return res.res;
 
@@ -418,6 +433,8 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 {
 	static ne_read_res res;
 	ne_read_arg arg;
+	static ne_readsize_res res2;
+	ne_readsize_arg arg2;
 	(void) fi;
 	int stat, i, j, miss, l;
 	char *data;
@@ -425,36 +442,49 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	unsigned index[K];
 	int temp[M];
 
-	test = test - 1;
+	//test = test - 1;
 
 	plog_entry_location(__FUNCTION__, "read call");
+
+	arg2.path = strdup(path);
+	memset((char *)&res2, 0, sizeof(res2));
+	
+	for (i = 0; i < M; i++) {
+		stat = cs_readsize(arg2, &res2, slave[i]);
+		if (res2.res == 0) 
+			break;
+	}
+
 	memset((char *)&res, 0, sizeof(res));
-	data = (char *)malloc((M * test + 1) * sizeof(char));
 	arg.path = strdup(path);
-	arg.size = size;
+	//size = res2.size;
+
+	data = (char *)malloc((M * res2.size + 1) * sizeof(char));
+	arg.path = strdup(path);
+	arg.size = res2.size * K;
 	arg.offset = offset;
 	
 	plog_mode_location(__FUNCTION__, size);
-	plog_mode_location(__FUNCTION__, test);
+	plog_mode_location(__FUNCTION__, arg.size);
 
 	for (i = 0; i < M; i++) {
 		stat = cs_read(arg, &res, slave[i]);
 		temp[i] = -stat;
 		if (!stat) {
 	//		temp[i] = i;
-			for (j = 0; j < test; j++) {
-				data[i * test + j] = res.buf[j];
+			for (j = 0; j < res2.size; j++) {
+				data[i * res2.size + j] = res.buf[j];
 			}
 		}
 		else {
 	//		temp[i] = -1;
-			for (j = 0; j < size; j++) {
-				data[i * test + j] = 'x';
+			for (j = 0; j < res2.size; j++) {
+				data[i * res2.size + j] = 'x';
 			}		
 		}
 		plog_entry_location(__FUNCTION__, data);
 	}
-	data[M * test] = '\0';
+	data[M * res2.size] = '\0';
 	index[0] = 1;
 	/*
 	for (i = 0; i < K; i++) {
@@ -480,8 +510,9 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	//staterr&xdrfree
 //	miss = cal_miss(index, K);
 	
-	output = decode(data, K, M, index, 1, test);
+	output = decode(data, K, M, index, 1, res2.size);
 	size = res.res;
+	plog_mode_location(__FUNCTION__, size);
 	plog_entry_location(__FUNCTION__, output);
 	memcpy(buf, output, size);
 	//buf = strdup(res.buf);
@@ -523,8 +554,10 @@ static int ne_write(const char *path, const char *buf, size_t size,
 	//staterr&xdrfree
 	
 //	size = res.res;
-	test = size;
+	//test = size;
 	free(output);
+
+	dirty = 1;
 
 	return size;
 }
@@ -546,20 +579,29 @@ static int ne_statfs(const char *path, struct statvfs *stbuf)
 
 static int ne_release(const char *path, struct fuse_file_info *fi)
 {
-	/* Just a stub.	 This method is optional and can safely be left
-	   unimplemented */
-
 	static ne_truncate_res res;
 	ne_truncate_arg arg;
-	int stat;
+	static ne_readsize_res res2;
+	ne_readsize_arg arg2;
+	int stat, i;
 
 	plog_entry_location(__FUNCTION__, "release call");
+/*
+	arg2.path = strdup(path);
+	memset((char *)&res2, 0, sizeof(res2));
+	
+	for (i = 0; i < M; i++) {
+		stat = cs_readsize(arg2, &res2, slave[i]);
+		if (res2.res == 0) 
+			break;
+	}
+
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
-	arg.size = test;
-	if (test == 0)
-		return 0;
-	plog_mode_location(__FUNCTION__, test);
+	arg.size = res2.size * K;
+
+	plog_mode_location(__FUNCTION__, arg.size);
+	plog_entry_location(__FUNCTION__, arg.path);
 	
 	stat = cm_truncate(arg, &res, master);
 
@@ -568,7 +610,7 @@ static int ne_release(const char *path, struct fuse_file_info *fi)
 
 	if (res.res != 0)
 		return res.res;
-
+*/
 	return 0;
 }
 

@@ -41,6 +41,28 @@ struct ne_write_res {
 };
 typedef struct ne_write_res ne_write_res;
 
+struct ne_readsize_arg {
+	char *path;
+};
+typedef struct ne_readsize_arg ne_readsize_arg;
+
+struct ne_readsize_res {
+	uint64_t size;
+	int res;
+};
+typedef struct ne_readsize_res ne_readsize_res;
+
+struct ne_truncate_arg {
+	char *path;
+	uint64_t size;
+};
+typedef struct ne_truncate_arg ne_truncate_arg;
+
+struct ne_truncate_res {
+	int res;
+};
+typedef struct ne_truncate_res ne_truncate_res;
+
 #define CSPROG 17777
 #define CSVERS 1
 
@@ -51,6 +73,12 @@ extern  bool_t read_1_svc(ne_read_arg , ne_read_res *, struct svc_req *);
 #define WRITE 2
 extern  enum clnt_stat write_1(ne_write_arg , ne_write_res *, CLIENT *);
 extern  bool_t write_1_svc(ne_write_arg , ne_write_res *, struct svc_req *);
+#define READSIZE 3
+extern  enum clnt_stat readsize_1(ne_readsize_arg , ne_readsize_res *, CLIENT *);
+extern  bool_t readsize_1_svc(ne_readsize_arg , ne_readsize_res *, struct svc_req *);
+#define TRUNCATE 4
+extern  enum clnt_stat truncate_1(ne_truncate_arg , ne_truncate_res *, CLIENT *);
+extern  bool_t truncate_1_svc(ne_truncate_arg , ne_truncate_res *, struct svc_req *);
 extern int csprog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
@@ -60,6 +88,12 @@ extern  bool_t read_1_svc();
 #define WRITE 2
 extern  enum clnt_stat write_1();
 extern  bool_t write_1_svc();
+#define READSIZE 3
+extern  enum clnt_stat readsize_1();
+extern  bool_t readsize_1_svc();
+#define TRUNCATE 4
+extern  enum clnt_stat truncate_1();
+extern  bool_t truncate_1_svc();
 extern int csprog_1_freeresult ();
 #endif /* K&R C */
 
@@ -70,12 +104,20 @@ extern  bool_t xdr_ne_read_arg (XDR *, ne_read_arg*);
 extern  bool_t xdr_ne_read_res (XDR *, ne_read_res*);
 extern  bool_t xdr_ne_write_arg (XDR *, ne_write_arg*);
 extern  bool_t xdr_ne_write_res (XDR *, ne_write_res*);
+extern  bool_t xdr_ne_readsize_arg (XDR *, ne_readsize_arg*);
+extern  bool_t xdr_ne_readsize_res (XDR *, ne_readsize_res*);
+extern  bool_t xdr_ne_truncate_arg (XDR *, ne_truncate_arg*);
+extern  bool_t xdr_ne_truncate_res (XDR *, ne_truncate_res*);
 
 #else /* K&R C */
 extern bool_t xdr_ne_read_arg ();
 extern bool_t xdr_ne_read_res ();
 extern bool_t xdr_ne_write_arg ();
 extern bool_t xdr_ne_write_res ();
+extern bool_t xdr_ne_readsize_arg ();
+extern bool_t xdr_ne_readsize_res ();
+extern bool_t xdr_ne_truncate_arg ();
+extern bool_t xdr_ne_truncate_res ();
 
 #endif /* K&R C */
 

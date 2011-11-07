@@ -15,11 +15,12 @@ extern int cm_rename(ne_rename_arg , ne_rename_res *, char *);
 extern int cm_link(ne_link_arg , ne_link_res *, char *);
 extern int cm_chmod(ne_chmod_arg , ne_chmod_res *, char *);
 extern int cm_chown(ne_chown_arg , ne_chown_res *, char *);
-extern int cm_truncate(ne_truncate_arg , ne_truncate_res *, char *);
+extern int cs_truncate(ne_truncate_arg , ne_truncate_res *, char *);
 //extern int cm_utimens(ne_utimens_arg , ne_utimens_res *, char *);
 extern int cm_open(ne_open_arg , ne_open_res *, char *);
 
 extern int cs_read(ne_read_arg , ne_read_res *, char *);
 extern int cs_write(ne_write_arg , ne_write_res *, char *);
+extern int cs_readsize(ne_readsize_arg , ne_readsize_res *, char *);
 
 //extern int cm_statfs(ne_statfs_arg , ne_statfs_res *, char *);

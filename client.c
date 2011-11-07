@@ -327,12 +327,12 @@ int cm_chown(ne_chown_arg arg, ne_chown_res *res, char *ip)
 	return 0;
 }
 
-int cm_truncate(ne_truncate_arg arg, ne_truncate_res *res, char *ip)
+int cs_truncate(ne_truncate_arg arg, ne_truncate_res *res, char *ip)
 {
 	CLIENT *clnt;
 	int stat;
 
-	clnt = clnt_create(ip, NEFSPROG, NEFSVERS, "tcp");
+	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
 
 	//TODO:clnt == NULL
 	if (clnt == NULL) {
@@ -421,9 +421,36 @@ int cs_write(ne_write_arg arg, ne_write_res *res, char *ip)
 	//TODO:clnt == NULL
 	if (clnt == NULL) {
 		plog_entry_location(__FUNCTION__, "clnt NULL");
+		return 1;
 	}
 
 	stat = write_1(arg, res, clnt);
+
+	//TODO:
+	if (stat != RPC_SUCCESS) {
+		print_rpccall_err(__FUNCTION__, stat);
+		return 1;
+	}
+
+	clnt_destroy(clnt);
+
+	return 0;
+}
+
+int cs_readsize(ne_readsize_arg arg, ne_readsize_res *res, char *ip)
+{
+	CLIENT *clnt;
+	int stat;
+
+	clnt = clnt_create(ip, CSPROG, CSVERS, "tcp");
+
+	//TODO:clnt == NULL
+	if (clnt == NULL) {
+		plog_entry_location(__FUNCTION__, "clnt NULL");
+		return 1;
+	}
+
+	stat = readsize_1(arg, res, clnt);
 
 	//TODO:
 	if (stat != RPC_SUCCESS) {
