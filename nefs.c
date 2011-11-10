@@ -50,7 +50,6 @@ static int ne_getattr(const char *path, struct stat *stbuf)
 	static ne_readsize_res res2;
 	ne_readsize_arg arg2;
 	int stat;
-	plog_entry_location(__FUNCTION__, "getattr call");
 	
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
@@ -100,7 +99,6 @@ static int ne_access(const char *path, int mask)
 	ne_access_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "access call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.mask = mask;
@@ -122,7 +120,6 @@ static int ne_readlink(const char *path, char *buf, size_t size)
 	ne_readlink_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "readlink call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.size = size;
@@ -151,7 +148,6 @@ static int ne_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	ne_readdir_arg arg;
 	ne_dirent *de;
 	int stat;
-	plog_entry_location(__FUNCTION__, "readdir call");
 
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
@@ -177,7 +173,6 @@ static int ne_mknod(const char *path, mode_t mode, dev_t rdev)
 	ne_mknod_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "mknod call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.mode = mode;
@@ -200,7 +195,6 @@ static int ne_mkdir(const char *path, mode_t mode)
 	ne_mkdir_arg arg;
 	int stat;
 	
-	plog_entry_location(__FUNCTION__, "mkdir call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.mode = mode;
@@ -218,7 +212,6 @@ static int ne_unlink(const char *path)
 	ne_unlink_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "unlink call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	
@@ -239,7 +232,6 @@ static int ne_rmdir(const char *path)
 	ne_rmdir_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "rmdir call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	
@@ -257,7 +249,6 @@ static int ne_symlink(const char *from, const char *to)
 	ne_symlink_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "symlink call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.from = strdup(from);
 	arg.to = strdup(to);
@@ -279,7 +270,6 @@ static int ne_rename(const char *from, const char *to)
 	ne_rename_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "rename call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.from = strdup(from);
 	arg.to = strdup(to);
@@ -301,7 +291,6 @@ static int ne_link(const char *from, const char *to)
 	ne_link_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "link call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.from = strdup(from);
 	arg.to = strdup(to);
@@ -323,7 +312,6 @@ static int ne_chmod(const char *path, mode_t mode)
 	ne_chmod_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "chmod call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.mode = mode;
@@ -345,7 +333,6 @@ static int ne_chown(const char *path, uid_t uid, gid_t gid)
 	ne_chown_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "chown call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.uid = uid;
@@ -368,11 +355,9 @@ static int ne_truncate(const char *path, off_t size)
 	ne_truncate_arg arg;
 	int stat, i;
 
-	plog_entry_location(__FUNCTION__, "truncate call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.size = size;
-	plog_mode_location(__FUNCTION__, size);
 	
 	for (i = 0; i < M; i++) {
 		stat = cs_truncate(arg, &res, slave[i]);
@@ -394,7 +379,6 @@ static int ne_utimens(const char *path, const struct timespec ts[2])
 	//struct timeval tv[2];
 	(void) path;
 
-	plog_entry_location(__FUNCTION__, "utimens call");
 	/* change to a stub
 	tv[0].tv_sec = ts[0].tv_sec;
 	tv[0].tv_usec = ts[0].tv_nsec / 1000;
@@ -415,7 +399,6 @@ static int ne_open(const char *path, struct fuse_file_info *fi)
 	ne_open_arg arg;
 	int stat;
 
-	plog_entry_location(__FUNCTION__, "open call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 	arg.flags = fi->flags;
@@ -444,7 +427,6 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 
 	//test = test - 1;
 
-	plog_entry_location(__FUNCTION__, "read call");
 
 	arg2.path = strdup(path);
 	memset((char *)&res2, 0, sizeof(res2));
@@ -464,8 +446,6 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	arg.size = res2.size * K;
 	arg.offset = offset;
 	
-	plog_mode_location(__FUNCTION__, size);
-	plog_mode_location(__FUNCTION__, arg.size);
 
 	for (i = 0; i < M; i++) {
 		stat = cs_read(arg, &res, slave[i]);
@@ -482,7 +462,6 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 				data[i * res2.size + j] = 'x';
 			}		
 		}
-		plog_entry_location(__FUNCTION__, data);
 	}
 	data[M * res2.size] = '\0';
 	index[0] = 1;
@@ -512,12 +491,9 @@ static int ne_read(const char *path, char *buf, size_t size, off_t offset,
 	
 	output = decode(data, K, M, index, 1, res2.size);
 	size = res.res;
-	plog_mode_location(__FUNCTION__, size);
-	plog_entry_location(__FUNCTION__, output);
 	memcpy(buf, output, size);
 	//buf = strdup(res.buf);
 	//buf[size] = '\0';
-	//plog_entry_location(__FUNCTION__, buf);
 
 	return size;
 }
@@ -531,19 +507,16 @@ static int ne_write(const char *path, const char *buf, size_t size,
 	char *output;
 	(void) fi;
 
-	plog_entry_location(__FUNCTION__, "write call");
 	memset((char *)&res, 0, sizeof(res));
 	arg.path = strdup(path);
 //	arg.size = size;
 	arg.offset = offset;
 //	arg.buf = strdup(buf);
-	plog_mode_location(__FUNCTION__, size);
 
 	chunksize = div_ceil(size, K);
 	arg.size = chunksize;
 	output = encode(buf, K, M, chunksize);
 	
-	plog_entry_location(__FUNCTION__, output);
 
 	for (i = 0; i < M; i++) {
 		arg.buf = strndup(output + (i * chunksize), chunksize);
@@ -568,7 +541,6 @@ static int ne_statfs(const char *path, struct statvfs *stbuf)
 	(void) path;
 	(void) stbuf;
 
-	plog_entry_location(__FUNCTION__, "statfs call");
 	/* change to stub
 	res = statvfs(path, stbuf);
 	if (res == -1)
@@ -585,7 +557,6 @@ static int ne_release(const char *path, struct fuse_file_info *fi)
 	ne_readsize_arg arg2;
 	int stat, i;
 
-	plog_entry_location(__FUNCTION__, "release call");
 /*
 	arg2.path = strdup(path);
 	memset((char *)&res2, 0, sizeof(res2));
@@ -600,8 +571,6 @@ static int ne_release(const char *path, struct fuse_file_info *fi)
 	arg.path = strdup(path);
 	arg.size = res2.size * K;
 
-	plog_mode_location(__FUNCTION__, arg.size);
-	plog_entry_location(__FUNCTION__, arg.path);
 	
 	stat = cm_truncate(arg, &res, master);
 
@@ -623,7 +592,6 @@ static int ne_fsync(const char *path, int isdatasync,
 	(void) path;
 	(void) isdatasync;
 	(void) fi;
-	plog_entry_location(__FUNCTION__, "fsync call");
 	return 0;
 }
 
@@ -633,7 +601,6 @@ static int ne_setxattr(const char *path, const char *name, const char *value,
 			size_t size, int flags)
 {
 	int res = lsetxattr(path, name, value, size, flags);
-	plog_entry_location(__FUNCTION__, "setxattr call");
 	if (res == -1)
 		return -errno;
 	return 0;
@@ -643,7 +610,6 @@ static int ne_getxattr(const char *path, const char *name, char *value,
 			size_t size)
 {
 	int res = lgetxattr(path, name, value, size);
-	plog_entry_location(__FUNCTION__, "getxattr call");
 	if (res == -1)
 		return -errno;
 	return res;
@@ -652,7 +618,6 @@ static int ne_getxattr(const char *path, const char *name, char *value,
 static int ne_listxattr(const char *path, char *list, size_t size)
 {
 	int res = llistxattr(path, list, size);
-	plog_entry_location(__FUNCTION__, "listxattr call");
 	if (res == -1)
 		return -errno;
 	return res;
@@ -661,7 +626,6 @@ static int ne_listxattr(const char *path, char *list, size_t size)
 static int ne_removexattr(const char *path, const char *name)
 {
 	int res = lremovexattr(path, name);
-	plog_entry_location(__FUNCTION__, "removexattr call");
 	if (res == -1)
 		return -errno;
 	return 0;
@@ -701,6 +665,5 @@ static struct fuse_operations ne_oper = {
 int main(int argc, char *argv[])
 {
 	umask(0);
-	plog_entry_location(__FUNCTION__, "test");
 	return fuse_main(argc, argv, &ne_oper, NULL);
 }

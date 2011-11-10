@@ -17,7 +17,6 @@ bool_t getattr_1_svc(ne_getattr_arg arg, ne_getattr_res *res, struct svc_req *re
 	res->res = lstat(path, &stbuf);
 
 	printf("getattr_svc:%s\n", path);
-//	plog_entry_location(__FUNCTION__, arg.path);
 	res->stbuf.dev = stbuf.st_dev;
 	res->stbuf.ino = stbuf.st_ino;
 	res->stbuf.mode = stbuf.st_mode;
