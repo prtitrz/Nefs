@@ -49,6 +49,7 @@ struct readlink_req {
 struct readlink_res {
 	char buf[4096];
 	int res;
+	int err;
 };
 
 struct readdir_req {
@@ -56,11 +57,13 @@ struct readdir_req {
 };
 
 struct readdir_res {
-	struct dirent *next;
+	struct dirent de;
+	int res;
+	int err;
 };
 
 struct mknod_req {
-	char *path;
+	char path[PATH_MAX];
 	unsigned int mode;
 	int rdev;
 };
@@ -70,8 +73,8 @@ struct mknod_res {
 };
 
 struct mkdir_req {
-	char *path;
-	unsigned int mode;
+	char path[PATH_MAX];
+	mode_t mode;
 };
 
 struct mkdir_res {
@@ -79,7 +82,7 @@ struct mkdir_res {
 };
 
 struct unlink_req {
-	char *path;
+	char path[PATH_MAX];
 };
 
 struct unlink_res {
@@ -87,7 +90,7 @@ struct unlink_res {
 };
 
 struct rmdir_req {
-	char *path;
+	char path[PATH_MAX];
 };
 
 struct rmdir_res {
@@ -95,8 +98,8 @@ struct rmdir_res {
 };
 
 struct symlink_req {
-	char *from;
-	char *to;
+	char from[PATH_MAX];
+	char to[PATH_MAX];
 };
 
 struct symlink_res {
@@ -104,8 +107,8 @@ struct symlink_res {
 };
 
 struct rename_req {
-	char *from;
-	char *to;
+	char from[PATH_MAX];
+	char to[PATH_MAX];
 };
 
 struct rename_res {
@@ -113,8 +116,8 @@ struct rename_res {
 };
 
 struct link_req {
-	char *from;
-	char *to;
+	char from[PATH_MAX];
+	char to[PATH_MAX];
 };
 
 struct link_res {
@@ -122,7 +125,7 @@ struct link_res {
 };
 
 struct chmod_req {
-	char *path;
+	char path[PATH_MAX];
 	unsigned int mode;
 };
 
@@ -131,7 +134,7 @@ struct chmod_res {
 };
 
 struct chown_req {
-	char *path;
+	char path[PATH_MAX];
 	unsigned int uid;
 	unsigned int gid;
 };
@@ -141,7 +144,7 @@ struct chown_res {
 };
 
 struct truncate_req {
-	char *path;
+	char path[PATH_MAX];
 	int size;
 };
 
@@ -153,7 +156,7 @@ struct utimens_req {};
 struct utimens_res {};
 
 struct open_req {
-	char *path;
+	char path[PATH_MAX];
 	int flags;
 };
 
@@ -162,19 +165,19 @@ struct open_res {
 };
 
 struct read_req {
-	char *path;
+	char path[PATH_MAX];
 	int size;
 	int offset;
 };
 
 struct read_res {
-	char *buf;
+	char buf[4097];
 	int res;
 };
 
 struct write_req {
-	char *path;
-	char *buf;
+	char path[PATH_MAX];
+	char buf[4097];
 	int size;
 	int offset;
 };

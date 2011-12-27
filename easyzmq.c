@@ -61,6 +61,24 @@ int s_sendmore (void *socket, char *string) {
     return (rc);
 }
 
+//FIXME
+void t_sendmore (void *socket, int type) {
+	char string[5];
+	sprintf(string, "%d", type);
+	s_sendmore(socket, string);
+}
+
+//FIXME
+int m_sendmore (void *socket, void *req, size_t size) {
+	int rc;
+	zmq_msg_t message;
+	zmq_msg_init_size (&message, size);
+	memcpy (zmq_msg_data (&message), req, size);
+	rc = zmq_send (socket, &message, ZMQ_SNDMORE);
+	zmq_msg_close (&message);
+	return (rc);
+}
+
 //  Receives all message parts from socket, prints neatly
 void s_dump (void *socket)
 {

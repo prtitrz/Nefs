@@ -44,5 +44,7 @@ extern int m_recv(void *socket, void *req);
 extern int s_send(void *socket, char *string);
 extern int m_send(void *socket, void *req, size_t size);
 extern int s_sendmore(void *socket, char *string);
+extern int m_sendmore(void *socket, void *req, size_t size);
+extern void t_sendmore(void *socket, int type);
 
 #endif  //  __ZHELPERS_H_INCLUDED__
