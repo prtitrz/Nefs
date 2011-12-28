@@ -269,83 +269,242 @@ static int zmqpeer_unlink(const char *path)
 
 static int zmqpeer_rmdir(const char *path)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = rmdir(path);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	debug_puts("rmdir_loc");
+
+	t_sendmore(requester, RMDIR);
+	
+	struct rmdir_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+
+	m_send(requester, &req, sizeof(req));
+
+	struct rmdir_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
 
 static int zmqpeer_symlink(const char *from, const char *to)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = symlink(from, to);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	debug_puts("symlink_loc");
+
+	t_sendmore(requester, SYMLINK);
+	
+	struct symlink_req req;
+	strncpy(req.from, from, strlen(from));
+	req.from[strlen(from)] = '\0';
+	strncpy(req.to, to, strlen(to));
+	req.to[strlen(to)] = '\0';
+
+	m_send(requester, &req, sizeof(req));
+
+	struct symlink_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
 
 static int zmqpeer_rename(const char *from, const char *to)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = rename(from, to);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	debug_puts("rename_loc");
+
+	t_sendmore(requester, RENAME);
+	
+	struct rename_req req;
+	strncpy(req.from, from, strlen(from));
+	req.from[strlen(from)] = '\0';
+	strncpy(req.to, to, strlen(to));
+	req.to[strlen(to)] = '\0';
+
+	m_send(requester, &req, sizeof(req));
+
+	struct rename_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
 
 static int zmqpeer_link(const char *from, const char *to)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = link(from, to);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	debug_puts("link_loc");
+
+	t_sendmore(requester, LINK);
+	
+	struct link_req req;
+	strncpy(req.from, from, strlen(from));
+	req.from[strlen(from)] = '\0';
+	strncpy(req.to, to, strlen(to));
+	req.to[strlen(to)] = '\0';
+
+	m_send(requester, &req, sizeof(req));
+
+	struct link_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
 
 static int zmqpeer_chmod(const char *path, mode_t mode)
 {
-	int res;
+	debug_puts("chmod_loc, this is not allowed");
 
-	res = chmod(path, mode);
-	if (res == -1)
-		return -errno;
+	/*Not allowed to chmod
+	 *
+	void *context = zmq_init (1);
 
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	t_sendmore(requester, CHMOD);
+	
+	struct chmod_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	req.mode = mode;
+
+	m_send(requester, &req, sizeof(req));
+
+	struct chmod_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
+	*/
 	return 0;
 }
 
 static int zmqpeer_chown(const char *path, uid_t uid, gid_t gid)
 {
-	int res;
+	debug_puts("chown_loc, this is not allowed");
 
-	res = lchown(path, uid, gid);
-	if (res == -1)
-		return -errno;
+	/*Not allowed to chown
+	 *
+	void *context = zmq_init (1);
 
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+	t_sendmore(requester, CHOWN);
+	
+	struct chown_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	req.uid = uid;
+	req.gid = gid;
+
+	m_send(requester, &req, sizeof(req));
+
+	struct chown_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
+	*/
 	return 0;
 }
 
 static int zmqpeer_truncate(const char *path, off_t size)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = truncate(path, size);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *sender = zmq_socket (context, ZMQ_PUB);
+    zmq_bind (sender, "tcp://*:5556");
+
+	void *controller = zmq_socket(context, ZMQ_PULL);
+	zmq_connect (controller, "tcp://localhost:5557");
+
+	t_sendmore(sender, TRUNCATE);
+	
+	struct truncate_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	req.size = size;
+
+	m_send(sender, &req, sizeof(req));
+
+	struct truncate_res res;
+	m_recv(sender, &res);
+
+	zmq_close (sender);
+	zmq_term (context);
+
+	if (res.res != 0) {
+		return res.res;
+	}
 
 	return 0;
 }
 
 static int zmqpeer_utimens(const char *path, const struct timespec ts[2])
 {
+	debug_puts("utimens_loc, this is not supported");
+
+	/*Not support utimens
+	 *
 	int res;
 	struct timeval tv[2];
 
@@ -357,7 +516,7 @@ static int zmqpeer_utimens(const char *path, const struct timespec ts[2])
 	res = utimes(path, tv);
 	if (res == -1)
 		return -errno;
-
+	*/
 	return 0;
 }
 
@@ -413,11 +572,16 @@ static int zmqpeer_write(const char *path, const char *buf, size_t size,
 
 static int zmqpeer_statfs(const char *path, struct statvfs *stbuf)
 {
+	debug_puts("statfs_loc, this is not supported");
+
+	/*Not support statfs
+	 *
 	int res;
 
 	res = statvfs(path, stbuf);
 	if (res == -1)
 		return -errno;
+	*/
 
 	return 0;
 }
