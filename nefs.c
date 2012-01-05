@@ -468,28 +468,48 @@ static int zmqpeer_chown(const char *path, uid_t uid, gid_t gid)
 
 static int zmqpeer_truncate(const char *path, off_t size)
 {
+	debug_puts("truncate_loc");
 	void *context = zmq_init (1);
 
     //  Socket to talk to server
-    void *sender = zmq_socket (context, ZMQ_PUB);
-    zmq_bind (sender, "tcp://*:5556");
+    void *sender = zmq_socket (context, ZMQ_PUSH);
+	zmq_bind (sender, "tcp://*:5556");
 
 	void *controller = zmq_socket(context, ZMQ_PULL);
 	zmq_connect (controller, "tcp://localhost:5557");
 
-	t_sendmore(sender, TRUNCATE);
-	
 	struct truncate_req req;
+	struct truncate_res res;
 	strncpy(req.path, path, strlen(path));
 	req.path[strlen(path)] = '\0';
 	req.size = size;
 
-	m_send(sender, &req, sizeof(req));
+//	zmq_pollitem_t items[] = {
+//		{ controller, 0, ZMQ_POLLIN, 0 },
+//	};
 
-	struct truncate_res res;
-	m_recv(sender, &res);
+//	int i=0;
+//	int rc;
+
+//	while (1) {
+		t_sendmore(sender, TRUNCATE);
+		m_send(sender, &req, sizeof(req));
+
+//		sleep(1);
+
+//		zmq_poll (items, 1, 10);
+//		if (items [0].revents & ZMQ_POLLIN) {
+//		if ((rc = nm_recv(controller, &res)) ==0) {
+			m_recv(controller, &res);
+//			i++;
+//			if (i >= 1) {
+//				break;
+//			}
+//		}
+//	}
 
 	zmq_close (sender);
+	zmq_close (controller);
 	zmq_term (context);
 
 	if (res.res != 0) {
@@ -522,22 +542,40 @@ static int zmqpeer_utimens(const char *path, const struct timespec ts[2])
 
 static int zmqpeer_open(const char *path, struct fuse_file_info *fi)
 {
-	int res;
+	void *context = zmq_init (1);
 
-	res = open(path, fi->flags);
-	if (res == -1)
-		return -errno;
+    //  Socket to talk to server
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
 
-	close(res);
+	debug_puts("open_loc");
+
+	t_sendmore(requester, OPEN);
+	
+	struct open_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	req.flags = fi->flags;
+
+	m_send(requester, &req, sizeof(req));
+
+	struct open_res res;
+	m_recv(requester, &res);
+
+	zmq_close (requester);
+	zmq_term (context);
+
+	if (res.res < 0) {
+		return res.res;
+	}
+
 	return 0;
 }
 
 static int zmqpeer_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-	int fd;
-	int res;
-
+	/*
 	(void) fi;
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -549,12 +587,51 @@ static int zmqpeer_read(const char *path, char *buf, size_t size, off_t offset,
 
 	close(fd);
 	return res;
+*/
+	void *context = zmq_init (1);
+
+    void *sender = zmq_socket (context, ZMQ_REQ);
+	zmq_connect (sender, "tcp://localhost:5558");
+
+	void *controller = zmq_socket(context, ZMQ_PULL);
+	zmq_connect (controller, "tcp://localhost:5559");
+
+	debug_puts("read_loc");
+
+	struct read_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	req.size = size;
+	req.offset = offset;
+
+//	int i=0;
+
+	//for(i = 0; i <=2; i++) {
+		t_sendmore(sender, READ);
+		m_send(sender, &req, sizeof(req));
+	//}
+
+	struct read_res res;
+	m_recv(sender, &res);
+
+	zmq_close (sender);
+	zmq_close (controller);
+	zmq_term (context);
+
+	if (res.res < 0) {
+		return res.res;
+	}
+
+	memcpy(buf, res.buf, res.res);
+
+	return res.res;
 }
 
 static int zmqpeer_write(const char *path, const char *buf, size_t size,
 		     off_t offset, struct fuse_file_info *fi)
 {
-	int fd;
+	debug_puts("write_loc");
+/*	int fd;
 	int res;
 
 	(void) fi;
@@ -568,6 +645,43 @@ static int zmqpeer_write(const char *path, const char *buf, size_t size,
 
 	close(fd);
 	return res;
+*/
+	void *context = zmq_init (1);
+
+    void *sender = zmq_socket (context, ZMQ_REQ);
+	zmq_connect (sender, "tcp://localhost:5558");
+
+	void *controller = zmq_socket(context, ZMQ_PULL);
+	zmq_connect (controller, "tcp://localhost:5559");
+
+
+	struct write_req req;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+	strncpy(req.buf, buf, strlen(buf));
+	req.buf[strlen(buf)] = '\0';
+	req.size = size;
+	req.offset = offset;
+
+//	int i=0;
+
+	//for(i = 0; i <=2; i++) {
+		t_sendmore(sender, WRITE);
+		m_send(sender, &req, sizeof(req));
+	//}
+
+	struct write_res res;
+	m_recv(sender, &res);
+
+	zmq_close (sender);
+	zmq_close (controller);
+	zmq_term (context);
+
+	if (res.res < 0) {
+		return res.res;
+	}
+
+	return res.res;
 }
 
 static int zmqpeer_statfs(const char *path, struct statvfs *stbuf)

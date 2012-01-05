@@ -2,12 +2,15 @@ CC = gcc
 CFLAGS = -Wall -lzmq `pkg-config fuse --cflags --libs`
 
 #all: fec easyfec slave master nefs
-all: local remote
+all: local mds osd
 
 local: nefs.c easyzmq.c
 	$(CC) -o $@ $^ $(CFLAGS)
 
-remote: mds.c easyzmq.c
+mds: mds.c easyzmq.c
+	$(CC) -o $@ $^ $(CFLAGS)
+
+osd: osd.c easyzmq.c
 	$(CC) -o $@ $^ $(CFLAGS)
 
 #slave: slave.c nefs_cs_svc.c nefs_cs_xdr.c

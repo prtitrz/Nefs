@@ -145,7 +145,7 @@ struct chown_res {
 
 struct truncate_req {
 	char path[PATH_MAX];
-	int size;
+	size_t size;
 };
 
 struct truncate_res {
@@ -180,6 +180,10 @@ struct write_req {
 	char buf[4097];
 	int size;
 	int offset;
+};
+
+struct write_res {
+	int res;
 };
 
 struct statfs_res {};

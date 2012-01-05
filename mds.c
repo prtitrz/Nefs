@@ -224,7 +224,7 @@ static void chown_svc(void *socket)
 	m_send(socket, &res, sizeof(res));
 }
 
-static void truncate_svc(void *socket)
+static void truncate_svc(void *socket, void *controller)
 {
 	debug_puts("truncate_svc");
 	struct truncate_req req;
@@ -234,6 +234,22 @@ static void truncate_svc(void *socket)
 	res.res = truncate(req.path, req.size);
 	if (res.res == -1)
 		res.res = -errno;
+
+	m_send(controller, &res, sizeof(res));
+}
+
+static void open_svc(void *socket)
+{
+	debug_puts("open_svc");
+	struct open_req req;
+	m_recv(socket, &req);
+
+	struct open_res res;
+	res.res = open(req.path, req.flags);
+	if (res.res == -1)
+		res.res = -errno;
+
+	close(res.res);
 
 	m_send(socket, &res, sizeof(res));
 }
@@ -246,12 +262,15 @@ int main (void)
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_bind (responder, "tcp://*:5555");
 
-	void *receiver = zmq_socket (context, ZMQ_SUB);
+	void *receiver = zmq_socket (context, ZMQ_PULL);
 	zmq_connect (receiver, "tcp://localhost:5556");
-	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
+//	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
 
 	void *controller = zmq_socket (context, ZMQ_PUSH);
 	zmq_bind (controller, "tcp://*:5557");
+
+//	void *fake = zmq_socket (context, ZMQ_PUSH);
+//	zmq_bind (fake, "tcp://*:12314");
 
 	//Process messages from responder and receiver
 	zmq_pollitem_t items[] = {
@@ -261,7 +280,7 @@ int main (void)
 
     while (1) {
 		zmq_poll (items, 2, -1);
-		if (item [0].revents & ZMQ_POLLIN) {
+		if (items [0].revents & ZMQ_POLLIN) {
 			//  Wait for next request from client
 			char *string = s_recv(responder);
 
@@ -316,9 +335,11 @@ int main (void)
 					chown_svc(responder);
 					break;
 				case TRUNCATE:
+					debug_puts("NO!!!!");
+				//	truncate_svc(responder, controller);
 					break;
 				case OPEN:
-					//open_svc(responder);
+					open_svc(responder);
 					break;
 				case READ:
 					break;
@@ -329,17 +350,20 @@ int main (void)
 					break;
 			}
 		}
-		if (item [1].revents & ZMQ_POLLIN) {
-			string = s_recv(responder);
+		if (items [1].revents & ZMQ_POLLIN) {
+			char *string = s_recv(receiver);
 
+			int type;
 			sscanf(string, "%d", &type);
 
 			free(string);
-			zmq_getsockopt(responder, ZMQ_RCVMORE, &more, &more_size);
+			int64_t more;
+			size_t more_size = sizeof(more);
+			zmq_getsockopt(receiver, ZMQ_RCVMORE, &more, &more_size);
 
 			switch(type) {
 				case TRUNCATE:
-					truncate_svc(recevier, controller);
+					truncate_svc(receiver, controller);
 					break;
 				default:
 					debug_puts("CONTROLLER ERROR");
@@ -350,7 +374,7 @@ int main (void)
     }
     //  We never get here but if we did, this would be how we end
     zmq_close (responder);
-    zmq_close (recevier);
+    zmq_close (receiver);
     zmq_close (controller);
     zmq_term (context);
     return 0;

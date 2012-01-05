@@ -28,6 +28,17 @@ int m_recv (void *socket, void *req) {
 	return 0;
 }
 
+int nm_recv (void *socket, void *req) {
+	zmq_msg_t message;
+	zmq_msg_init (&message);
+	if (zmq_recv (socket, &message, ZMQ_NOBLOCK))
+		return -1;
+	int size = zmq_msg_size (&message);
+	memcpy ((char *)req, zmq_msg_data (&message), size);
+	zmq_msg_close (&message);
+	return 0;
+}
+
 //  Convert C string to 0MQ string and send to socket
 int s_send (void *socket, char *string) {
     int rc;
