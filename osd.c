@@ -1,4 +1,4 @@
-#include "nefs.h"
+#include "xdr.h"
 #include "easyzmq.h"
 #include "debug.h"
 
@@ -21,7 +21,7 @@ static void read_svc(void *socket, void *controller)
 
 	close(fd);
 
-	m_send(socket, &res, sizeof(res));
+	m_send(controller, &res, sizeof(res));
 }
 
 static void write_svc(void *socket, void *controller)
@@ -43,7 +43,16 @@ static void write_svc(void *socket, void *controller)
 
 	close(fd);
 
-	m_send(socket, &res, sizeof(res));
+	m_send(controller, &res, sizeof(res));
+}
+
+static void init_svc(void *socket, void *controller)
+{
+	char *string = s_recv(socket);
+	free(string);
+
+	s_send(controller, "osd");
+	debug_puts("OSD_INIT");
 }
 
 int main(int argc, const char *argv[])
@@ -53,18 +62,24 @@ int main(int argc, const char *argv[])
     //  Socket to talk to clients
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_bind (responder, "tcp://*:5558");
-
+/*
 	void *receiver = zmq_socket (context, ZMQ_PULL);
 	zmq_connect (receiver, "tcp://localhost:5560");
 	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
 
 	void *controller = zmq_socket (context, ZMQ_PUSH);
-	zmq_bind (controller, "tcp://*:5559");
+	zmq_bind (controller, "tcp://a:5559");
+*/
 
-//	void *fake = zmq_socket (context, ZMQ_PUSH);
-//	zmq_bind (fake, "tcp://*:12314");
+	void *receiver = zmq_socket (context, ZMQ_SUB);
+	zmq_connect (receiver, "tcp://localhost:5556");
+	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
 
-	//Process messages from responder and receiver
+	sleep(1);
+	void *controller = zmq_socket (context, ZMQ_PUSH);
+	zmq_bind (controller, "tcp://*:5557");
+
+	//Process messages
 	zmq_pollitem_t items[] = {
 		{ responder, 0, ZMQ_POLLIN, 0 },
 		{ receiver, 0, ZMQ_POLLIN, 0 },
@@ -72,6 +87,7 @@ int main(int argc, const char *argv[])
 
     while (1) {
 		zmq_poll (items, 2, -1);
+		
 		if (items [0].revents & ZMQ_POLLIN) {
 			//  Wait for next request from client
 			char *string = s_recv(responder);
@@ -85,13 +101,16 @@ int main(int argc, const char *argv[])
 			zmq_getsockopt(responder, ZMQ_RCVMORE, &more, &more_size);
 
 			switch(type) {
+				case INIT:
+					//init_svc(responder, controller);
+					break;
 				case READ:
 					debug_puts("NO!!");
-					read_svc(responder, controller);
+					//read_svc(responder, controller);
 					break;
 				case WRITE:
 					debug_puts("NO!!");
-					write_svc(responder, controller);
+					//write_svc(responder, controller);
 					break;
 				default:
 					debug_puts("ERROR");
@@ -111,6 +130,9 @@ int main(int argc, const char *argv[])
 			zmq_getsockopt(receiver, ZMQ_RCVMORE, &more, &more_size);
 
 			switch(type) {
+				case INIT:
+					init_svc(receiver, controller);
+					break;
 				case READ:
 					read_svc(receiver, controller);
 					break;
@@ -124,7 +146,7 @@ int main(int argc, const char *argv[])
 		}
 	}
     //  We never get here but if we did, this would be how we end
-    zmq_close (responder);
+    //zmq_close (responder);
     zmq_close (receiver);
     zmq_close (controller);
     zmq_term (context);

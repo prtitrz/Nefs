@@ -1,9 +1,10 @@
-#include "nefs.h"
+#include "xdr.h"
 #include "easyzmq.h"
 #include "debug.h"
 
 static void getattr_svc(void *socket)
 {
+	debug_puts("attr_svc");
 	struct getattr_req req;
 	m_recv(socket, &req);
 
@@ -254,6 +255,15 @@ static void open_svc(void *socket)
 	m_send(socket, &res, sizeof(res));
 }
 
+static void init_svc(void *socket, void *controller)
+{
+	char *string = s_recv(socket);
+	free(string);
+
+	s_send(controller, "mds");
+	debug_puts("MDS_INIT");
+}
+
 int main (void)
 {
     void *context = zmq_init (1);
@@ -262,17 +272,18 @@ int main (void)
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_bind (responder, "tcp://*:5555");
 
-	void *receiver = zmq_socket (context, ZMQ_PULL);
+	void *receiver = zmq_socket (context, ZMQ_SUB);
 	zmq_connect (receiver, "tcp://localhost:5556");
-//	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
+	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
+
+	sleep(1);
 
 	void *controller = zmq_socket (context, ZMQ_PUSH);
 	zmq_bind (controller, "tcp://*:5557");
 
-//	void *fake = zmq_socket (context, ZMQ_PUSH);
-//	zmq_bind (fake, "tcp://*:12314");
+	debug_puts("b");
 
-	//Process messages from responder and receiver
+	//Process messages 
 	zmq_pollitem_t items[] = {
 		{ responder, 0, ZMQ_POLLIN, 0 },
 		{ receiver, 0, ZMQ_POLLIN, 0 },
@@ -362,7 +373,11 @@ int main (void)
 			zmq_getsockopt(receiver, ZMQ_RCVMORE, &more, &more_size);
 
 			switch(type) {
+				case INIT:
+					init_svc(receiver, controller);
+					break;
 				case TRUNCATE:
+					debug_puts("YES");
 					truncate_svc(receiver, controller);
 					break;
 				default:
