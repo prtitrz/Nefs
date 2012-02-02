@@ -2,6 +2,14 @@
 #include "easyzmq.h"
 #include "debug.h"
 
+const char *MDS_PATH = "/home/rz/MDS";
+
+static void set_path(char *realpath, const char *path)
+{
+	strcpy(realpath, MDS_PATH);
+	strncat(realpath, path, PATH_MAX);
+}
+
 static void getattr_svc(void *socket)
 {
 	debug_puts("attr_svc");
@@ -11,7 +19,10 @@ static void getattr_svc(void *socket)
 	struct getattr_res res;
 	size_t size = sizeof(res);
 	memset((char *)&res, 0, size);
-	res.res = lstat(req.path, &(res.stbuf));
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = lstat(path, &(res.stbuf));
 	if (res.res == -1) {
 		res.res = -errno;
 	}
@@ -27,7 +38,10 @@ static void access_svc(void *socket)
 	struct access_res res;
 	size_t size = sizeof(res);
 	memset((char *)&res, 0, size);
-	res.res = access(req.path, req.mask);
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = access(path, req.mask);
 	if (res.res == -1) {
 		res.res = -errno;
 	}
@@ -43,7 +57,10 @@ static void readlink_svc(void *socket)
 	struct readlink_res res;
 	size_t size = sizeof(res);
 	memset((char *)&res, 0, size);
-	res.res = readlink(req.path, res.buf, req.size - 1);
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = readlink(path, res.buf, req.size - 1);
 
 	if (res.res == -1) {
 		res.err = -errno;
@@ -63,8 +80,11 @@ static void readdir_svc(void *socket)
 
 	DIR *dp;
 	struct dirent *de;
+	char path[PATH_MAX];
 
-	dp = opendir(req.path);
+	set_path(path, req.path);
+
+	dp = opendir(path);
 	res.err = 0;
 	if (dp == NULL) {
 		res.err = -errno;
@@ -91,17 +111,20 @@ static void mknod_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct mknod_res res;
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
 
 	/* On Linux this could just be 'mknod(path, mode, rdev)' but this
 	   is more portable */
 	if (S_ISREG(req.mode)) {
-		res.res = open(req.path, O_CREAT | O_EXCL | O_WRONLY, req.mode);
+		res.res = open(path, O_CREAT | O_EXCL | O_WRONLY, req.mode);
 		if (res.res >= 0) 
 			res.res = close(res.res);
 	} else if (S_ISFIFO(req.mode)) 
-		res.res = mkfifo(req.path, req.mode);
+		res.res = mkfifo(path, req.mode);
 	else
-		res.res = mknod(req.path, req.mode, req.rdev);
+		res.res = mknod(path, req.mode, req.rdev);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -115,8 +138,11 @@ static void mkdir_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct mkdir_res res;
+	char path[PATH_MAX];
 
-	res.res = mkdir(req.path, req.mode);
+	set_path(path, req.path);
+
+	res.res = mkdir(path, req.mode);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -130,8 +156,11 @@ static void unlink_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct unlink_res res;
+	char path[PATH_MAX];
 
-	res.res = unlink(req.path);
+	set_path(path, req.path);
+
+	res.res = unlink(path);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -145,8 +174,11 @@ static void rmdir_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct rmdir_res res;
+	char path[PATH_MAX];
 
-	res.res = rmdir(req.path);
+	set_path(path, req.path);
+
+	res.res = rmdir(path);
 	if (res.res == -1) {
 		res.res = -errno;
 	}
@@ -161,7 +193,12 @@ static void symlink_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct symlink_res res;
-	res.res = symlink(req.from, req.to);
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, req.from);
+	set_path(to, req.to);
+	res.res = symlink(from, to);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -176,7 +213,12 @@ static void rename_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct rename_res res;
-	res.res = rename(req.from, req.to);
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, req.from);
+	set_path(to, req.to);
+	res.res = rename(from, to);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -190,7 +232,12 @@ static void link_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct link_res res;
-	res.res = link(req.from, req.to);
+	char from[PATH_MAX];
+	char to[PATH_MAX];
+
+	set_path(from, req.from);
+	set_path(to, req.to);
+	res.res = link(from, to);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -204,7 +251,10 @@ static void chmod_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct chmod_res res;
-	res.res = chmod(req.path, req.mode);
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = chmod(path, req.mode);
 	if (res.res == -1) 
 		res.res = -errno;
 
@@ -218,7 +268,10 @@ static void chown_svc(void *socket)
 	m_recv(socket, &req);
 
 	struct chmod_res res;
-	res.res = lchown(req.path, req.uid, req.gid);
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = lchown(path, req.uid, req.gid);
 	if (res.res == -1)
 		res.res = -errno;
 
@@ -232,7 +285,10 @@ static void truncate_svc(void *socket, void *controller)
 	m_recv(socket, &req);
 
 	struct truncate_res res;
-	res.res = truncate(req.path, req.size);
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
+	res.res = truncate(path, req.size);
 	if (res.res == -1)
 		res.res = -errno;
 
@@ -245,14 +301,58 @@ static void open_svc(void *socket)
 	struct open_req req;
 	m_recv(socket, &req);
 
+	char path[PATH_MAX];
+
+	set_path(path, req.path);
 	struct open_res res;
-	res.res = open(req.path, req.flags);
+	res.res = open(path, req.flags);
 	if (res.res == -1)
 		res.res = -errno;
 
 	close(res.res);
 
 	m_send(socket, &res, sizeof(res));
+}
+
+static void read_svc(void *socket, void *controller)
+{
+	debug_puts("read_svc");
+	struct read_req req;
+	m_recv(socket, &req);
+}
+
+static void write_svc(void *socket, void *controller)
+{
+	debug_puts("write_svc");
+
+	struct write_req req;
+	m_recv(socket, &req);
+
+//	struct write_res res;
+/*
+	set_path(path, req.path);
+	fd = open(path, O_WRONLY);
+	if (fd == -1)
+		res.res = -errno;
+
+	res.res = pwrite(fd, req.buf, req.size, req.offset);
+	if (res.res == -1)
+		res.res = -errno;
+
+	close(fd);
+	debug_print("%d",res.res);
+*/
+//	res.res = 5555;
+//	debug_print("%d", res.res);
+//	m_send(controller, &res, sizeof(res));
+}
+
+static void readsize_svc(void *socket, void *controller)
+{
+	debug_puts("readsize_svc");
+
+	struct readsize_req req;
+	m_recv(socket, &req);
 }
 
 static void init_svc(void *socket, void *controller)
@@ -272,16 +372,15 @@ int main (void)
     void *responder = zmq_socket (context, ZMQ_REP);
     zmq_bind (responder, "tcp://*:5555");
 
-	void *receiver = zmq_socket (context, ZMQ_SUB);
+	void *receiver = zmq_socket (context, ZMQ_PULL);
+//	zmq_connect (receiver, "tcp://192.168.0.85:5556");
 	zmq_connect (receiver, "tcp://localhost:5556");
-	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
+//	zmq_setsockopt (receiver, ZMQ_SUBSCRIBE, "", 0);
 
 	sleep(1);
 
 	void *controller = zmq_socket (context, ZMQ_PUSH);
-	zmq_bind (controller, "tcp://*:5557");
-
-	debug_puts("b");
+	zmq_connect (controller, "tcp://localhost:5557");
 
 	//Process messages 
 	zmq_pollitem_t items[] = {
@@ -374,11 +473,21 @@ int main (void)
 
 			switch(type) {
 				case INIT:
+					debug_puts("YES");
 					init_svc(receiver, controller);
+					break;
+				case READ:
+					read_svc(receiver, controller);
+					break;
+				case WRITE:
+					write_svc(receiver, controller);
 					break;
 				case TRUNCATE:
 					debug_puts("YES");
 					truncate_svc(receiver, controller);
+					break;
+				case READSIZE:
+					readsize_svc(receiver, controller);
 					break;
 				default:
 					debug_puts("CONTROLLER ERROR");

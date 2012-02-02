@@ -3,6 +3,38 @@
 #include "debug.h"
 #include "nefs.h"
 
+static size_t ne_readsize(const char *path)
+{
+	char type[5];
+	
+	struct readsize_req req;
+	struct readsize_res res;
+	strncpy(req.path, path, strlen(path));
+	req.path[strlen(path)] = '\0';
+
+	int i=0;
+	size_t temp=0;
+
+	for (i = 0; i <=1; i++) {
+		t_sendmore(sender, READSIZE);
+		m_send(sender, &req, sizeof(req));
+	}
+
+	for (i = 0; i<=0; i++) {
+		m_recv(controller, &res);
+		if (temp == 0) {
+			temp = res.len;
+		}
+		else {
+			if (temp != res.len) {
+				debug_puts("FILE BAD");
+			}
+		}
+	}
+
+	return temp;
+}
+
 static int zmqpeer_getattr(const char *path, struct stat *stbuf)
 {
 	debug_puts("attr_loc");
@@ -29,11 +61,15 @@ static int zmqpeer_getattr(const char *path, struct stat *stbuf)
 	memset((char *)stbuf, 0, sizeof(struct stat));
 	memcpy(stbuf, &(res.stbuf), sizeof(struct stat));
 
+	stbuf->st_size = ne_readsize(path);
+	debug_print("%d", stbuf->st_size);
+
     return 0;
 }
 
 static int zmqpeer_access(const char *path, int mask)
 {
+	debug_puts("access_loc");
 	char type[5];
 	sprintf(type, "%d", ACCESS);
 	s_sendmore(requester, type);
@@ -357,32 +393,37 @@ static int zmqpeer_truncate(const char *path, off_t size)
 	req.size = size;
 
 	zmq_pollitem_t items[] = {
-		{ controllerb, 0, ZMQ_POLLIN, 0 },
+		{ controller, 0, ZMQ_POLLIN, 0 },
 	};
 
 	int i=0;
 	int rc;
 
-	while (1) {
+//	while (1) {
+	for (i = 0; i < 2; i++) {
 		debug_puts("TRUN_CON");
-		t_sendmore(senderb, TRUNCATE);
-		m_send(senderb, &req, sizeof(req));
+		t_sendmore(sender, TRUNCATE);
+		m_send(sender, &req, sizeof(req));
+	}
 
 //		zmq_poll (items, 1, 10);
 //		if (items [0].revents & ZMQ_POLLIN) {
-		if ((rc = nm_recv(controllerb, &res)) ==0) {
-			//m_recv(controllerb, &res);
-			i++;
-			if (i >= 1) {
-				break;
-			}
-		}
-	}
-
+//		if ((rc = nm_recv(controller, &res)) ==0) {
+//			//m_recv(controllerb, &res);
+//			i++;
+//			if (i >= 1) {
+//				break;
+//			}
+//		}
+//	}
+/*
 	if (res.res != 0) {
 		return res.res;
 	}
-
+*/
+	for (i = 0; i < 2; i++) {
+		m_recv(controller, &res);
+	}
 	return 0;
 }
 
@@ -445,24 +486,28 @@ static int zmqpeer_read(const char *path, char *buf, size_t size, off_t offset,
 	int i=0;
 	int rc;
 
-	while (1) {
-		debug_puts("READ_CON");
-		t_sendmore(senderb, READ);
-		m_send(senderb, &req, sizeof(req));
+	for (i = 0; i <= 1; i ++) {
+		t_sendmore(sender, READ);
+		m_send(sender, &req, sizeof(req));
 
-		if ((rc = nm_recv(controllerb, &res)) ==0) {
-			i++;
-			if (i >= 1) {
-				break;
-			}
-		}
 	}
+//		if ((rc = nm_recv(controller, &res)) ==0) {
+//			i++;
+//			if (i >= 1) {
+//				break;
+//			}
+//		}
+//	}
+	m_recv(controller, &res);
+	debug_puts(res.buf);
+	debug_print("%d", res.res);
 
 	if (res.res < 0) {
 		return res.res;
 	}
 
 	memcpy(buf, res.buf, res.res);
+	debug_puts(buf);
 
 	return res.res;
 }
@@ -484,24 +529,36 @@ static int zmqpeer_write(const char *path, const char *buf, size_t size,
 	int i=0;
 	int rc;
 
-	while (1) {
-		debug_puts("WRITE_CON");
-		t_sendmore(senderb, WRITE);
-		m_send(senderb, &req, sizeof(req));
-
-		if ((rc = nm_recv(controllerb, &res)) ==0) {
-			i++;
-			if (i >= 1) {
-				break;
+//	while (1) {
+	for (i = 0; i <= 1; i ++) {
+		t_sendmore(sender, WRITE);
+		m_send(sender, &req, sizeof(req));
+/*
+		zmq_poll (items, 1, 10);
+		if (items [0].revents & ZMQ_POLLIN) {
+		//if ((rc = nm_recv(controllerb, &res)) ==0) {
+			rc = m_recv(controllerb, &res);
+			debug_print("%d", rc);
+			if (res.res == 5)
+			{
+				i++;
+				if (i >= 1) {
+					break;
+				}
 			}
 		}
+*/	}
+	for (i = 0; i <= 0; i ++) {
+		rc = m_recv(controller, &res);
+		if (res.res != 5555)
+			size = res.res;
 	}
 
-	if (res.res < 0) {
-		return res.res;
+	if (size < 0) {
+		return size;
 	}
 
-	return res.res;
+	return size;
 }
 
 static int zmqpeer_statfs(const char *path, struct statvfs *stbuf)
@@ -569,28 +626,28 @@ static struct fuse_operations zmqpeer_oper = {
 void init(void)
 {
 	zmq_pollitem_t items[] = {
-		{ controllerb, 0, ZMQ_POLLIN, 0 },
+		{ controller, 0, ZMQ_POLLIN, 0 },
 	};
 
 	int i;
 
 	while (1) {
-		t_sendmore(senderb, INIT);
-		s_send(senderb, "TEST");
+		t_sendmore(sender, INIT);
+		s_send(sender, "METEDATA SERVER");
 
 		sleep(1);
 
 		zmq_poll (items, 1, 10);
+		debug_puts("INIT_CON");
 		if (items [0].revents & ZMQ_POLLIN) {
-			char *string = s_recv(controllerb);
+			char *string = s_recv(controller);
+//			debug_puts(string);
 			if (strcmp(string, "mds") == 0)
 			{
-				debug_puts("MDS READY");
 				i = 3;
 			}
 			if (strcmp(string, "osd") == 0)
 			{
-				debug_puts("OSD READY");
 				if (i == 3)
 					i = 4;
 				else
@@ -612,20 +669,20 @@ int main(int argc, char *argv[])
 	debug_puts("main_loc");
 
 	void *context = zmq_init (1);
-    sender = zmq_socket (context, ZMQ_REQ);
-	zmq_connect (sender, "tcp://localhost:5558");
+   // sender = zmq_socket (context, ZMQ_REQ);
+//	zmq_connect (sender, "tcp://localhost:5558");
 
-	controller = zmq_socket(context, ZMQ_PULL);
-	zmq_connect (controller, "tcp://localhost:5559");
-
-    senderb = zmq_socket (context, ZMQ_PUB);
-	zmq_bind (senderb, "tcp://*:5556");
-
-	controllerb = zmq_socket(context, ZMQ_PULL);
-	zmq_connect (controllerb, "tcp://localhost:5557");
+//	controller = zmq_socket(context, ZMQ_PULL);
+//	zmq_connect (controller, "tcp://localhost:5559");
 
     requester = zmq_socket (context, ZMQ_REQ);
     zmq_connect (requester, "tcp://localhost:5555");
+
+    sender = zmq_socket (context, ZMQ_PUSH);
+	zmq_bind (sender, "tcp://*:5556");
+
+	controller = zmq_socket(context, ZMQ_PULL);
+	zmq_bind (controller, "tcp://*:5557");
 
 	init();
 	debug_puts("INIT_DONE");

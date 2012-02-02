@@ -18,7 +18,7 @@
 #include <sys/time.h>
 #include <errno.h>
 
-enum type { INIT, GETATTR, ACCESS, READLINK, READDIR, MKNOD, MKDIR, SYMLINK, UNLINK, RMDIR, RENAME, LINK, CHMOD, CHOWN, TRUNCATE, UTIMENS, OPEN, READ, WRITE, STATFS };
+enum type { INIT, GETATTR, ACCESS, READLINK, READDIR, MKNOD, MKDIR, SYMLINK, UNLINK, RMDIR, RENAME, LINK, CHMOD, CHOWN, TRUNCATE, UTIMENS, OPEN, READ, WRITE, STATFS, READSIZE };
 
 struct init_req {
 };
@@ -192,5 +192,13 @@ struct write_res {
 struct statfs_res {};
 struct statfs_req {};
 
+struct readsize_req {
+	char path[PATH_MAX];
+};
+
+struct readsize_res {
+	size_t len;
+	int res;
+};
 
 #endif
